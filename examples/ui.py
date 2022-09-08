@@ -1,4 +1,4 @@
-from panik import *
+from panik_core import *
 
 
 game = Game()
