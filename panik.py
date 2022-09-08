@@ -8,7 +8,7 @@ from pygments import highlight
 from pygments.lexers import PythonLexer
 from pygments.formatters.html import HtmlFormatter
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.1.3")
+print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.1.0")
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.font.init()
