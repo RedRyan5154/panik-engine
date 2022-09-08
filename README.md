@@ -40,6 +40,5 @@ def  main():
 		window.update() # update the window
 
 if  __name__ == '__main__':
-
 	main()
 ```
