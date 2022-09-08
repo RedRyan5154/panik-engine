@@ -21,7 +21,7 @@ from panik_core import *
 ```
 # A minimal window
 ```python
-from  panik_core  import *
+from panik_core import *
 
 window = Window("A minimal window", 600, 400) # create a window
 window.background = (255, 255, 255)
