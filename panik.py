@@ -4,9 +4,6 @@ import pygame
 import time
 import pygame_gui
 import pygame_texteditor
-from pygments import highlight
-from pygments.lexers import PythonLexer
-from pygments.formatters.html import HtmlFormatter
 
 print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.1.0")
 
