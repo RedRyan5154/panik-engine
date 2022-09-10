@@ -2,6 +2,7 @@ import os
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
+from pygame.locals import *
 import time
 import pygame_gui
 import pygame_texteditor
@@ -29,6 +30,10 @@ class Window:
             pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
         # fps
         self.clock = pygame.time.Clock()
+
+    @property
+    def winsize(self):
+        return pygame.display.get_surface().get_size()
 
     def blit(self, surface=[]):
         self.queue.extend(surface)
@@ -124,6 +129,9 @@ class Window:
 
     def setResizable(self):
         self.WIN = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+
+    def setFullscreen(self):
+        self.WIN = pygame.display.set_mode((0, 0), FULLSCREEN | DOUBLEBUF, 16)
 
 
 class Events:
