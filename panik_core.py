@@ -1,4 +1,5 @@
 import os
+from typing import Container
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
@@ -114,6 +115,7 @@ class Window:
         self.queue = []
         # ui
         if uimanager:
+            uimanager.manager.set_visual_debug_mode(self.devmode)
             uimanager.manager.update(float(self.delta_time))
             uimanager.manager.draw_ui(self.WIN)
         if ui:
@@ -132,6 +134,12 @@ class Window:
 
     def setFullscreen(self):
         self.WIN = pygame.display.set_mode((0, 0), FULLSCREEN | DOUBLEBUF, 16)
+
+    def setTitle(self, title):
+        pygame.display.set_caption(title)
+
+    def setIcon(self, icon):
+        pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 
 
 class Events:
@@ -155,7 +163,9 @@ class Events:
             pygame_gui.UI_SELECTION_LIST_DOUBLE_CLICKED_SELECTION
         )
         self.DIALOG_CONFIRMED = pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED
+        self.PATH_SELECTED = pygame_gui.UI_FILE_DIALOG_PATH_PICKED
         self.KEY_PRESSED = pygame.KEYDOWN
+        self.SCREENRESIZE = pygame.VIDEORESIZE
 
     def get(self):
         return pygame.event.get()
@@ -480,6 +490,14 @@ class Mouse:
     def getMousePos(self):
         return pygame.mouse.get_pos()
 
+    @property
+    def mousex(self):
+        return pygame.mouse.get_pos()[0]
+
+    @property
+    def mousey(self):
+        return pygame.mouse.get_pos()[1]
+
     def leftClick(self):
         return pygame.mouse.get_pressed()[0]
 
@@ -488,6 +506,16 @@ class Mouse:
 
     def rightClick(self):
         return pygame.mouse.get_pressed()[3]
+
+    def isColisionClicked(self, colision):
+        if (
+            pygame.Rect.colliderect(
+                colision.colision, pygame.Rect((self.mousex, self.mousey), (1, 1))
+            )
+            and self.leftClick()
+        ):
+            return True
+        return False
 
 
 class Audio:
@@ -582,7 +610,10 @@ class Keys:
 class UI:
     def __init__(self):
         self.w, self.h = pygame.display.get_surface().get_size()
-        self.manager = pygame_gui.UIManager((self.w, self.h))
+        self.loader = pygame_gui.core.IncrementalThreadedResourceLoader()
+        self.manager = pygame_gui.UIManager(
+            (self.w, self.h), resource_loader=self.loader
+        )
 
     def update(self):
         self.w, self.h = pygame.display.get_surface().get_size()
@@ -591,333 +622,318 @@ class UI:
     def process_events(self, event):
         self.manager.process_events(event)
 
+    def set_size(self, sx, sy):
+        self.manager.set_window_resolution((sx, sy))
+
 
 class UIButton:
-    def __init__(self, text, manager, x, y, sizex=100, sizey=50):
+    def __init__(self, text, manager, x, y, sizex=100, sizey=50, container=None):
+        self.container = container
         self.text = text
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.button = pygame_gui.elements.UIButton(
-            relative_rect=self.rect,
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UIButton(
+            relative_rect=self.colision,
             text=self.text,
             manager=self.manager.manager,
             allow_double_clicks=True,
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.button = pygame_gui.elements.UIButton(
-            relative_rect=self.rect,
-            text=self.text,
-            manager=self.manager.manager,
-            allow_double_clicks=True,
+            container=self.container,
         )
 
     def hide(self):
-        self.button.hide()
+        self.element.hide()
 
     def show(self):
-        self.button.show()
+        self.element.show()
 
     def disable(self):
-        self.button.disable()
+        self.element.disable()
 
     def enable(self):
-        self.button.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.button.update(delta)
+        self.element.update(delta)
 
 
 class UIText:
-    def __init__(self, text, manager, x, y, sizex=200, sizey=100):
+    def __init__(self, text, manager, x, y, sizex=200, sizey=100, container=None):
+        self.container = container
         self.text = text
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.text = pygame_gui.elements.UITextBox(
-            self.text, self.rect, self.manager.manager
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.text = pygame_gui.elements.UITextBox(
-            self.text, self.rect, self.manager.manager
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UITextBox(
+            self.text, self.colision, self.manager.manager, container=self.container
         )
 
     def hide(self):
-        self.text.hide()
+        self.element.hide()
 
     def show(self):
-        self.text.show()
+        self.element.show()
 
     def disable(self):
-        self.text.disable()
+        self.element.disable()
 
     def enable(self):
-        self.text.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.text.update(delta)
+        self.element.update(delta)
 
 
 class UILabel:
-    def __init__(self, text, manager, x, y, sizex=400, sizey=100):
+    def __init__(self, text, manager, x, y, sizex=400, sizey=100, container=None):
+        self.container = container
         self.text = text
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.text = pygame_gui.elements.UILabel(
-            self.rect, self.text, self.manager.manager
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.text = pygame_gui.elements.UILabel(
-            self.rect, self.text, self.manager.manager
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UILabel(
+            self.colision, self.text, self.manager.manager, container=self.container
         )
 
     def hide(self):
-        self.text.hide()
+        self.element.hide()
 
     def show(self):
-        self.text.show()
+        self.element.show()
 
     def disable(self):
-        self.text.disable()
+        self.element.disable()
 
     def enable(self):
-        self.text.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.text.update(delta)
+        self.element.update(delta)
 
 
 class UITextEntry:
-    def __init__(self, text, manager, x, y, sizex=200, sizey=50):
+    def __init__(self, text, manager, x, y, sizex=200, sizey=50, container=None):
+        self.container = container
         self.text = text
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((x, y), (sizex, sizey))
-        self.textentry = pygame_gui.elements.UITextEntryLine(
-            self.rect, self.manager.manager
+        self.colision = pygame.Rect((x, y), (sizex, sizey))
+        self.element = pygame_gui.elements.UITextEntryLine(
+            self.colision, self.manager.manager, container=self.container
         )
-        self.textentry.set_text(text)
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.textentry = pygame_gui.elements.UITextEntryLine(
-            self.rect, self.manager.manager
-        )
-        self.textentry.set_text(self.text)
+        self.element.set_text(text)
 
     @property
     def input(self):
-        return self.textentry.get_text()
+        return self.element.get_text()
 
     def hide(self):
-        self.textentry.hide()
+        self.element.hide()
 
     def show(self):
-        self.textentry.show()
+        self.element.show()
 
     def disable(self):
-        self.textentry.disable()
+        self.element.disable()
 
     def enable(self):
-        self.textentry.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.textentry.update(delta)
+        self.element.update(delta)
 
 
 class UICredEntry:
-    def __init__(self, text, manager, x, y, sizex=200, sizey=50):
+    def __init__(self, text, manager, x, y, sizex=200, sizey=50, container=None):
+        self.container = container
         self.text = text
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((x, y), (sizex, sizey))
-        self.textentry = pygame_gui.elements.UITextEntryLine(
-            self.rect, self.manager.manager
+        self.colision = pygame.Rect((x, y), (sizex, sizey))
+        self.element = pygame_gui.elements.UITextEntryLine(
+            self.colision, self.manager.manager, container=self.container
         )
-        self.textentry.set_text(text)
-        self.textentry.set_text_hidden(True)
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.textentry = pygame_gui.elements.UITextEntryLine(
-            self.rect, self.manager.manager
-        )
-        self.textentry.set_text(self.text)
-        self.textentry.set_text_hidden(True)
+        self.element.set_text(text)
+        self.element.set_text_hidden(True)
 
     @property
     def input(self):
-        return self.textentry.get_text()
+        return self.element.get_text()
 
     def hide(self):
-        self.textentry.hide()
+        self.element.hide()
 
     def show(self):
-        self.textentry.show()
+        self.element.show()
 
     def disable(self):
-        self.textentry.disable()
+        self.element.disable()
 
     def enable(self):
-        self.textentry.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.textentry.update(delta)
+        self.element.update(delta)
 
 
 class UIDropDownMenu:
-    def __init__(self, options, default_option, manager, x, y, sizex=100, sizey=25):
+    def __init__(
+        self,
+        options,
+        default_option,
+        manager,
+        x,
+        y,
+        sizex=100,
+        sizey=25,
+        container=None,
+    ):
+        self.container = container
         self.options = options
         self.default_option = default_option
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.dropdownmenu = pygame_gui.elements.UIDropDownMenu(
-            self.options, self.default_option, self.rect, self.manager.manager
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.dropdownmenu = pygame_gui.elements.UIDropDownMenu(
-            self.options, self.default_option, self.rect, self.manager.manager
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UIDropDownMenu(
+            self.options,
+            self.default_option,
+            self.colision,
+            self.manager.manager,
+            container=self.container,
         )
 
     def hide(self):
-        self.dropdownmenu.hide()
+        self.element.hide()
 
     def show(self):
-        self.dropdownmenu.show()
+        self.element.show()
 
     def disable(self):
-        self.dropdownmenu.disable()
+        self.element.disable()
 
     def enable(self):
-        self.dropdownmenu.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.dropdownmenu.update(delta)
+        self.element.update(delta)
 
 
 class UIHorizontalSlider:
     def __init__(
-        self, manager, x, y, sizex=200, sizey=25, starting_value=0, range=(0, 100)
+        self,
+        manager,
+        x,
+        y,
+        sizex=200,
+        sizey=25,
+        starting_value=0,
+        range=(0, 100),
+        container=None,
     ):
+        self.container = container
         self.range = range
         self.starting_value = starting_value
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.slider = pygame_gui.elements.UIHorizontalSlider(
-            self.rect, self.starting_value, self.range, self.manager.manager
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.slider = pygame_gui.elements.UIHorizontalSlider(
-            self.rect, self.starting_value, self.range, self.manager.manager
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UIHorizontalSlider(
+            self.colision,
+            self.starting_value,
+            self.range,
+            self.manager.manager,
+            container=self.container,
         )
 
     def hide(self):
-        self.slider.hide()
+        self.element.hide()
 
     def show(self):
-        self.slider.show()
+        self.element.show()
 
     def disable(self):
-        self.slider.disable()
+        self.element.disable()
 
     def enable(self):
-        self.slider.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.slider.update(delta)
+        self.element.update(delta)
 
 
 class UISelectionList:
-    def __init__(self, options, manager, x, y, sizex=200, sizey=200):
+    def __init__(self, options, manager, x, y, sizex=200, sizey=200, container=None):
+        self.container = container
         self.options = options
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.selectionlist = pygame_gui.elements.UISelectionList(
-            self.rect, self.options, self.manager.manager
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.selectionlist = pygame_gui.elements.UISelectionList(
-            self.rect, self.options, self.manager.manager
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UISelectionList(
+            self.colision, self.options, self.manager.manager, container=self.container
         )
 
     @property
     def selection(self):
-        return self.selectionlist.get_single_selection()
+        return self.element.get_single_selection()
 
     def hide(self):
-        self.selectionlist.hide()
+        self.element.hide()
 
     def show(self):
-        self.selectionlist.show()
+        self.element.show()
 
     def disable(self):
-        self.selectionlist.disable()
+        self.element.disable()
 
     def enable(self):
-        self.selectionlist.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.selectionlist.update(delta)
+        self.element.update(delta)
 
 
 class UICheckList:
-    def __init__(self, options, manager, x, y, sizex=200, sizey=200):
+    def __init__(self, options, manager, x, y, sizex=200, sizey=200, container=None):
+        self.container = container
         self.options = options
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.selectionlist = pygame_gui.elements.UISelectionList(
-            self.rect,
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UISelectionList(
+            self.colision,
             self.options,
             self.manager.manager,
             allow_multi_select=True,
             allow_double_clicks=False,
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.selectionlist = pygame_gui.elements.UISelectionList(
-            self.rect,
-            self.options,
-            self.manager.manager,
-            allow_multi_select=True,
-            allow_double_clicks=False,
+            container=self.container,
         )
 
     @property
     def selection(self):
-        return self.selectionlist.get_multi_selection()
+        return self.element.get_multi_selection()
 
     def hide(self):
-        self.selectionlist.hide()
+        self.element.hide()
 
     def show(self):
-        self.selectionlist.show()
+        self.element.show()
 
     def disable(self):
-        self.selectionlist.disable()
+        self.element.disable()
 
     def enable(self):
-        self.selectionlist.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.selectionlist.update(delta)
+        self.element.update(delta)
+
+
+class UIImage:
+    def __init__(self, image, manager, x, y, sx, sy, container=None):
+        self.colision = pygame.Rect((x, y), (sx, sy))
+        self.surf = pygame.image.load(image).convert_alpha()
+        self.image = pygame_gui.elements.UIImage(
+            self.colision, self.surf, manager.manager, container
+        )
 
 
 class UIConfirmationDialog:
@@ -927,19 +943,9 @@ class UIConfirmationDialog:
         self.priority = priority
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.confirmdialog = pygame_gui.windows.UIConfirmationDialog(
-            self.rect,
-            self.manager.manager,
-            self.text,
-            window_title=self.title,
-            blocking=self.priority,
-        )
-
-    def update(self):
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-        self.confirmdialog = pygame_gui.windows.UIConfirmationDialog(
-            self.rect,
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.windows.UIConfirmationDialog(
+            self.colision,
             self.manager.manager,
             self.text,
             window_title=self.title,
@@ -947,82 +953,147 @@ class UIConfirmationDialog:
         )
 
     def hide(self):
-        self.confirmdialog.hide()
+        self.element.hide()
 
     def show(self):
-        self.confirmdialog.show()
+        self.element.show()
 
     def disable(self):
-        self.confirmdialog.disable()
+        self.element.disable()
 
     def enable(self):
-        self.confirmdialog.enable()
+        self.element.enable()
 
     def draw(self, delta):
-        self.confirmdialog.update(delta)
+        self.element.update(delta)
 
 
-""" ------------------------------------------------------------------------------------ Work in progress
-class UIWindow(pygame_gui.elements.UIWindow):
-    def __init__(self, title, manager, x, y, sizex=400, sizey=600, resizable=False):
-        super().__init__(pygame.Rect((x, y), (sizex, sizey)), manager.manager,
-                         window_display_title=title, resizable=resizable)
+class UIFileDialog:
+    def __init__(
+        self,
+        title,
+        initial_path,
+        manager,
+        x,
+        y,
+        sizex=600,
+        sizey=400,
+        allow_existing_files_only=False,
+        allow_picking_directories=False,
+    ):
+        self.initial_path = initial_path
         self.title = title
-        self.elements = {}
-        self.resizable = resizable
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex,sizey
-        self.rect = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
-    
-    def addElement(self, id, element):
-        self.elements[id] = element
-    
-    def process_events(self, event):
-        handled = super().process_event(event)
-        return handled
+        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.windows.UIFileDialog(
+            self.colision,
+            self.manager.manager,
+            self.title,
+            self.initial_path,
+            allow_existing_files_only=allow_existing_files_only,
+            allow_picking_directories=allow_picking_directories,
+        )
 
     def hide(self):
-        super().hide()
-    
+        self.element.hide()
+
     def show(self):
-        super().show()
+        self.element.show()
 
     def disable(self):
-       super().disable()
-    
+        self.element.disable()
+
     def enable(self):
-        super().enable()
+        self.element.enable()
 
     def draw(self, delta):
-        super().update(delta)
-
-class UIPWindow(pygame_gui.elements.UIWindow):
-    def __init__(self, position, ui_manager):
-        super().__init__(pygame.Rect(position, (320, 240)), ui_manager.manager,
-                         window_display_title='Super Awesome Pong!',
-                         object_id='#pong_window')
-
-        self.button = pygame_gui.elements.UIButton(pygame.Rect((0, 0), (100, 50)), "Button", ui_manager.manager, container=self, parent_element=self)
-        self.dropdown = pygame_gui.elements.UIDropDownMenu(["One", "Two", "Three"], "One", pygame.Rect((100, 0), (100, 25)), ui_manager.manager, container=self, parent_element=self)
+        self.element.update(delta)
 
 
-        self.is_active = False
+class UIWindow:
+    def __init__(
+        self,
+        title,
+        manager,
+        x,
+        y,
+        sizex=600,
+        sizey=400,
+        resizable=False,
+    ):
+        self.resizable = resizable
+        self.title = title
+        self.manager = manager
+        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UIWindow(
+            self.colision,
+            self.manager.manager,
+            self.title,
+            resizable=resizable,
+        )
 
-    def process_event(self, event):
-        handled = super().process_event(event)
-        if (event.type == pygame_gui.UI_BUTTON_PRESSED and
-                event.ui_object_id == "#pong_window.#title_bar" and
-                event.ui_element == self.title_bar):
-            handled = True
-            event_data = {'ui_element': self,
-                          'ui_object_id': self.most_specific_combined_id}
-        if self.is_active:
-            pass
-        return handled
+    def hide(self):
+        self.element.hide()
 
-    def update(self, time_delta):
-        if self.alive() and self.is_active:
-            pass
+    def show(self):
+        self.element.show()
 
-        super().update(time_delta)
-"""
+    def disable(self):
+        self.element.disable()
+
+    def enable(self):
+        self.element.enable()
+
+    def draw(self, delta):
+        self.element.update(delta)
+
+
+class UIContainer:
+    def __init__(self, manager, x, y, sizex=600, sizey=400, container=None):
+        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UIScrollingContainer(
+            self.colision,
+            manager.manager,
+        )
+
+    def hide(self):
+        self.element.hide()
+
+    def show(self):
+        self.element.show()
+
+    def disable(self):
+        self.element.disable()
+
+    def enable(self):
+        self.element.enable()
+
+    def draw(self, delta):
+        self.element.update(delta)
+
+
+class UIPanel:
+    def __init__(self, manager, x, y, sizex=600, sizey=400, container=None):
+        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
+        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.element = pygame_gui.elements.UIPanel(
+            self.colision, 1, manager.manager, container=container
+        )
+
+    def hide(self):
+        self.element.hide()
+
+    def show(self):
+        self.element.show()
+
+    def disable(self):
+        self.element.disable()
+
+    def enable(self):
+        self.element.enable()
+
+    def draw(self, delta):
+        self.element.update(delta)
