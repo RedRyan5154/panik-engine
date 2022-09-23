@@ -8,7 +8,7 @@ import time
 import pygame_gui
 import pygame_texteditor
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.1.0")
+print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.0.4")
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.font.init()
@@ -115,9 +115,12 @@ class Window:
         self.queue = []
         # ui
         if uimanager:
-            uimanager.manager.set_visual_debug_mode(self.devmode)
-            uimanager.manager.update(float(self.delta_time))
-            uimanager.manager.draw_ui(self.WIN)
+            try:
+                uimanager.manager.set_visual_debug_mode(self.devmode)
+                uimanager.manager.update(float(self.delta_time))
+                uimanager.manager.draw_ui(self.WIN)
+            except Exception as ex:
+                print(ex)
         if ui:
             for el in ui:
                 el.draw(self.delta_time)
@@ -164,6 +167,7 @@ class Events:
         )
         self.DIALOG_CONFIRMED = pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED
         self.PATH_SELECTED = pygame_gui.UI_FILE_DIALOG_PATH_PICKED
+        self.WINDOW_CLOSED = pygame_gui.UI_WINDOW_CLOSE
         self.KEY_PRESSED = pygame.KEYDOWN
         self.SCREENRESIZE = pygame.VIDEORESIZE
 
@@ -620,7 +624,10 @@ class UI:
         self.manager = pygame_gui.UIManager((self.w, self.h))
 
     def process_events(self, event):
-        self.manager.process_events(event)
+        try:
+            self.manager.process_events(event)
+        except Exception as e:
+            print(e)
 
     def set_size(self, sx, sy):
         self.manager.set_window_resolution((sx, sy))
@@ -692,7 +699,10 @@ class UILabel:
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
         self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
         self.element = pygame_gui.elements.UILabel(
-            self.colision, self.text, self.manager.manager, container=self.container
+            self.colision,
+            self.text,
+            self.manager.manager,
+            container=self.container,
         )
 
     def hide(self):
@@ -861,14 +871,20 @@ class UIHorizontalSlider:
 
 
 class UISelectionList:
-    def __init__(self, options, manager, x, y, sizex=200, sizey=200, container=None):
+    def __init__(
+        self, options, default, manager, x, y, sizex=200, sizey=200, container=None
+    ):
         self.container = container
         self.options = options
         self.manager = manager
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
         self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
         self.element = pygame_gui.elements.UISelectionList(
-            self.colision, self.options, self.manager.manager, container=self.container
+            self.colision,
+            self.options,
+            self.manager.manager,
+            container=self.container,
+            default_selection=default,
         )
 
     @property
@@ -1028,10 +1044,7 @@ class UIWindow:
         self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
         self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
         self.element = pygame_gui.elements.UIWindow(
-            self.colision,
-            self.manager.manager,
-            self.title,
-            resizable=resizable,
+            self.colision, self.manager.manager, self.title, resizable=resizable
         )
 
     def hide(self):
