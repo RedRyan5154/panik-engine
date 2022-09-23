@@ -202,7 +202,7 @@ class Events:
         self.KEY_PRESSED = pygame.KEYDOWN
         self.SCREENRESIZE = pygame.VIDEORESIZE
 
-    def get(self):
+    def get():
         return pygame.event.get()
 
 
@@ -210,7 +210,7 @@ class Game:
     def __init__(self):
         pass
 
-    def quit(self):
+    def quit():
         pygame.quit()
 
 
