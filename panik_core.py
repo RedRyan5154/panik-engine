@@ -1,14 +1,15 @@
 import os
-from typing import Container
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 from pygame.locals import *
 import time
+from numba import jit
+from numba import int32, float32  # import the types
+from numba.experimental import jitclass
 import pygame_gui
-import pygame_texteditor
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.0.4")
+print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.0.5")
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.font.init()
@@ -23,14 +24,18 @@ class Window:
         self.showfps = False
         self.height = height
         self.icon = icon
+        self.bg = (255, 255, 255)
         self.queue = []
-        self.BG = (255, 255, 255)
         self.WIN = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(title)
         if self.icon:
             pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
         # fps
         self.clock = pygame.time.Clock()
+        self.font_fps = pygame.font.Font(None, 20)
+        self.starttime = 0.0
+        self.endtime = 0.0
+        self.delta_time = 0.0
 
     @property
     def winsize(self):
@@ -44,11 +49,26 @@ class Window:
         return self.delta_time
 
     def update(self, uimanager=None, ui=None):
-        self.WIN.fill(self.BG)
+        self.starttime = time.time()
+        self.WIN.fill(self.bg)
         # all elements
         for el in self.queue:
             if el.parent:
                 if not el.parent.hide:
+                    if el.type == "bigmap":
+                        self.WIN.blit(
+                            el.image,
+                            (
+                                0,
+                                0,
+                            ),
+                            pygame.Rect(
+                                (el.x - el.size_x / 2 + el.parent.x) * -1,
+                                (el.y - el.size_y / 2 + el.parent.y) * -1,
+                                self.winsize[0],
+                                self.winsize[1],
+                            ),
+                        )
                     if el.type == "element":
                         self.WIN.blit(
                             el.image,
@@ -78,19 +98,31 @@ class Window:
                             + el.parent.y
                         )
                         if el.showcolision and self.devmode:
-                            font = pygame.font.Font(None, 30)
-                            text = font.render("ID: " + el.id, True, (0, 0, 0))
+                            text = self.font_fps.render("ID: " + el.id, True, (0, 0, 0))
                             pygame.draw.rect(self.WIN, (0, 0, 0), el.colision, 4)
                             self.WIN.blit(text, (el.colision.x, el.colision.y - 25))
                     if el.type == "colision":
                         el.colision.x = el.x - el.colisionsizex / 2 + el.parent.x
                         el.colision.y = el.y - el.colisionsizey / 2 + el.parent.y
                         if el.showcolision and self.devmode:
-                            font = pygame.font.Font(None, 30)
-                            text = font.render("ID: " + el.id, True, (0, 0, 0))
+                            text = self.font_fps.render("ID: " + el.id, True, (0, 0, 0))
                             pygame.draw.rect(self.WIN, (0, 0, 0), el.colision, 4)
                             self.WIN.blit(text, (el.colision.x, el.colision.y - 25))
             else:
+                if el.type == "bigmap":
+                    self.WIN.blit(
+                        el.image,
+                        (
+                            el.x - el.size_x / 2,
+                            el.y - el.size_y / 2,
+                        ),
+                        pygame.Rect(
+                            (el.x - el.size_x / 2 + el.parent.x) * -1,
+                            (el.y - el.size_y / 2 + el.parent.y) * -1,
+                            self.winsize[0],
+                            self.winsize[1],
+                        ),
+                    )
                 if el.type == "element":
                     self.WIN.blit(
                         el.image, (el.x - el.size_x / 2, el.y - el.size_y / 2)
@@ -100,16 +132,14 @@ class Window:
                         el.image, (el.x - el.size_x / 2, el.y - el.size_y / 2)
                     )
                     if el.showcolision and self.devmode:
-                        font = pygame.font.Font(None, 30)
-                        text = font.render("ID: " + el.id, True, (0, 0, 0))
+                        text = self.font_fps.render("ID: " + el.id, True, (0, 0, 0))
                         pygame.draw.rect(self.WIN, (0, 0, 0), el.colision, 4)
                         self.WIN.blit(text, (el.colision.x, el.colision.y - 25))
                 if el.type == "colision":
                     el.colision.x = el.x - el.colisionsizex / 2
                     el.colision.y = el.y - el.colisionsizey / 2
                     if el.showcolision and self.devmode:
-                        font = pygame.font.Font(None, 30)
-                        text = font.render("ID: " + el.id, True, (0, 0, 0))
+                        text = self.font_fps.render("ID: " + el.id, True, (0, 0, 0))
                         pygame.draw.rect(self.WIN, (0, 0, 0), el.colision, 4)
                         self.WIN.blit(text, (el.colision.x, el.colision.y - 25))
         self.queue = []
@@ -119,18 +149,19 @@ class Window:
                 uimanager.manager.set_visual_debug_mode(self.devmode)
                 uimanager.manager.update(float(self.delta_time))
                 uimanager.manager.draw_ui(self.WIN)
-            except Exception as ex:
-                print(ex)
-        if ui:
-            for el in ui:
-                el.draw(self.delta_time)
+                if ui:
+                    for el in ui:
+                        el.draw(self.delta_time)
+            except Exception:
+                print("Error")
         if self.showfps:
-            font = pygame.font.Font(None, 20)
-            text = font.render(
+            text = self.font_fps.render(
                 "FPS: " + str(round(self.clock.get_fps())), True, (0, 0, 0)
             )
             self.WIN.blit(text, (10, 15))
         pygame.display.update()
+        self.endtime = time.time()
+        return str((self.endtime - self.starttime) / 1000)[:5] + "ms"
 
     def setResizable(self):
         self.WIN = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
@@ -196,6 +227,95 @@ class Animation:
                 path = os.path.join(animpath, filename)
                 key = filename[:-4]
                 self.animations[key] = pygame.image.load(path).convert_alpha()
+
+
+class BigMap:
+    def __init__(
+        self,
+        id,
+        image,
+        x,
+        y,
+        image_scale=100,
+        rotation=0,
+        flip=[False, False],
+        parent=False,
+    ):
+        self.id = id
+        self.animationidx = 0
+        self.starttime = time.time()
+        self.parent = parent
+        self.image_scale = image_scale
+        self.flip = flip
+        self.x, self.y = x, y
+        self.rotation = rotation
+        self.type = "bigmap"
+        if type(image) == str:
+            self.image = pygame.image.load(image).convert_alpha()
+        else:
+            self.image = image.image
+        self.size_x = self.image_scale * self.image.get_width() / 100
+        self.size_y = self.image_scale * self.image.get_height() / 100
+        self.image = pygame.transform.flip(
+            pygame.transform.rotate(
+                pygame.transform.scale(self.image, (self.size_x, self.size_y)),
+                self.rotation,
+            ),
+            self.flip[0],
+            self.flip[1],
+        )
+
+    def animate(self, animation, animname=None, delay=0.1):
+        if animname:
+            self.image = animation.animations[animname]
+            self.size_x, self.size_y = (
+                self.image_scale * self.image.get_width() / 100,
+                self.image_scale * self.image.get_height() / 100,
+            )
+            self.image = pygame.transform.flip(
+                pygame.transform.rotate(
+                    pygame.transform.scale(self.image, (self.size_x, self.size_y)),
+                    self.rotation,
+                ),
+                self.flip[0],
+                self.flip[1],
+            )
+        else:
+            if time.time() - self.starttime > delay:
+                self.starttime = time.time()
+                if self.animationidx >= len(animation.animations) - 1:
+                    self.animationidx = 0
+                else:
+                    self.animationidx += 1
+                self.image = list(animation.animations.values())[self.animationidx]
+                self.size_x, self.size_y = (
+                    self.image_scale * self.image.get_width() / 100,
+                    self.image_scale * self.image.get_height() / 100,
+                )
+                self.image = pygame.transform.flip(
+                    pygame.transform.rotate(
+                        pygame.transform.scale(self.image, (self.size_x, self.size_y)),
+                        self.rotation,
+                    ),
+                    self.flip[0],
+                    self.flip[1],
+                )
+
+    def setImage(self):
+        if type(self.image) == str:
+            self.image = pygame.image.load(self.image).convert_alpha()
+        self.size_x, self.size_y = (
+            self.image_scale * self.image.get_width() / 100,
+            self.image_scale * self.image.get_height() / 100,
+        )
+        self.image = pygame.transform.flip(
+            pygame.transform.rotate(
+                pygame.transform.scale(self.image, (self.size_x, self.size_y)),
+                self.rotation,
+            ),
+            self.flip[0],
+            self.flip[1],
+        )
 
 
 class Element:
@@ -361,9 +481,8 @@ class Entity:
             self.colision.y -= y
 
     def isColidingGroup(self, colisiongroup=[]):
-        for col in colisiongroup:
-            if pygame.Rect.colliderect(self.colision, col.colision):
-                return True
+        if self.colision.collidelist(colisiongroup):
+            return True
         return False
 
     def isColiding(self, colision):
