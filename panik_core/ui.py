@@ -453,6 +453,9 @@ class UIWindow:
     def draw(self, delta):
         self.element.update(delta)
 
+    def close(self):
+        self.element.kill()
+
 
 class UIContainer:
     def __init__(self, manager, x, y, sizex=600, sizey=400, container=None):

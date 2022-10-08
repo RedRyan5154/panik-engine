@@ -3,41 +3,43 @@ from pygame.locals import *
 import time
 
 
-class Window:
-    def __init__(self, title, width, height, icon=None):
-        self.title = title
+class Subwindow:
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
         self.width = width
         self.height = height
+        self.rect = pygame.Rect((width, height), (x, y))
+        self.parent = None
+        self.id = "Sub"
         self.devmode = False
-        self.showfps = False
-        self.icon = icon
+        self.type = "sub"
         self.bg = (255, 255, 255)
         self.queue = []
-        self.WIN = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption(title)
-        if self.icon:
-            pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
-        else:
-            pygame.display.set_icon(
-                pygame.image.load("panik_core/asstes/logolowres.png").convert_alpha()
-            )
-        # fps
-        self.clock = pygame.time.Clock()
+        self.WIN = pygame.Surface((width, height))
+        pygame.transform.scale(self.WIN, (self.width, self.height))
+
         self.font_fps = pygame.font.Font(None, 20)
         self.starttime = 0.0
         self.endtime = 0.0
-        self.delta_time = 0.0
+
+    def updateSize(self):
+        self.WIN = pygame.transform.scale(self.WIN, (self.width, self.height))
 
     @property
     def winsize(self):
         return pygame.display.get_surface().get_size()
 
+    @property
+    def mousePos(self):
+        pos = pygame.mouse.get_pos()
+        return (
+            pos[0] - self.rect.x,
+            pos[1] - self.rect.y,
+        )
+
     def blit(self, object=[]):
         self.queue.extend(object)
-
-    def tick(self, fps=30):
-        self.delta_time = self.clock.tick(fps) / 1000.0
-        return self.delta_time
 
     def update(self, uimanager=None, ui=None, post=[]):
         self.starttime = time.time()
@@ -94,6 +96,7 @@ class Window:
                         el.colision.h = el.h
                         pygame.draw.rect(self.WIN, el.color, el.colision, el.border)
                     elif el.type == "text":
+                        print(el.x)
                         self.WIN.blit(el.text, (el.x, el.y))
             else:
                 if el.type == "sub":
@@ -156,7 +159,7 @@ class Window:
                                         el.y - el.size_y / 2 + el.parent.y,
                                     ),
                                 )
-                            elif el.type == "entity":
+                            if el.type == "entity":
                                 self.WIN.blit(
                                     el.image,
                                     (
@@ -186,7 +189,7 @@ class Window:
                                     self.WIN.blit(
                                         text, (el.colision.x, el.colision.y - 25)
                                     )
-                            elif el.type == "colision":
+                            if el.type == "colision":
                                 el.colision.x = (
                                     el.x - el.colisionsizex / 2 + el.parent.x
                                 )
@@ -205,7 +208,7 @@ class Window:
                                     self.WIN.blit(
                                         text, (el.colision.x, el.colision.y - 25)
                                     )
-                            elif el.type == "rect":
+                            if el.type == "rect":
                                 el.colision.x = el.x - el.w / 2 + el.parent.x
                                 el.colision.y = el.y - el.h / 2 + el.parent.y
                                 el.colision.w = el.w
@@ -213,31 +216,12 @@ class Window:
                                 pygame.draw.rect(
                                     self.WIN, el.color, el.colision, el.border
                                 )
-                            elif el.type == "text":
-                                self.WIN.blit(el.text, (el.x, el.y))
                     else:
-                        if el.type == "sub":
-                            self.WIN.blit(
-                                el.WIN,
-                                (
-                                    el.x - el.width / 2,
-                                    el.y - el.height / 2,
-                                ),
-                            )
-                            el.rect.x = el.x - el.width / 2
-                            el.rect.y = el.y - el.height / 2
-                            el.rect.w, el.rect.h = el.width, el.height
-                            if self.devmode:
-                                text = self.font_fps.render(
-                                    "ID: " + el.id, True, (0, 0, 0)
-                                )
-                                pygame.draw.rect(self.WIN, (0, 0, 0), el.rect, 4)
-                                self.WIN.blit(text, (el.rect.x, el.rect.y - 25))
-                        elif el.type == "element":
+                        if el.type == "element":
                             self.WIN.blit(
                                 el.image, (el.x - el.size_x / 2, el.y - el.size_y / 2)
                             )
-                        elif el.type == "entity":
+                        if el.type == "entity":
                             self.WIN.blit(
                                 el.image, (el.x - el.size_x / 2, el.y - el.size_y / 2)
                             )
@@ -247,39 +231,31 @@ class Window:
                             el.colision.y = (
                                 el.y + el.colisionoffsety - el.colisionsizey / 2
                             )
-                            if el.showcolision and self.devmode:
+                            if el.showcolision or self.devmode:
                                 text = self.font_fps.render(
                                     "ID: " + el.id, True, (0, 0, 0)
                                 )
                                 pygame.draw.rect(self.WIN, (0, 0, 0), el.colision, 4)
                                 self.WIN.blit(text, (el.colision.x, el.colision.y - 25))
-                        elif el.type == "colision":
+                        if el.type == "colision":
                             el.colision.x = el.x - el.colisionsizex / 2
                             el.colision.y = el.y - el.colisionsizey / 2
                             el.colision.w = el.colisionsizex
                             el.colision.h = el.colisionsizey
-                            if el.showcolision and self.devmode:
+                            if el.showcolision or self.devmode:
                                 text = self.font_fps.render(
                                     "ID: " + el.id, True, (0, 0, 0)
                                 )
                                 pygame.draw.rect(self.WIN, (0, 0, 0), el.colision, 4)
                                 self.WIN.blit(text, (el.colision.x, el.colision.y - 25))
-                        elif el.type == "rect":
+                        if el.type == "rect":
                             el.colision.x = el.x - el.w / 2
                             el.colision.y = el.y - el.h / 2
                             el.colision.w = el.w
                             el.colision.h = el.h
                             pygame.draw.rect(self.WIN, el.color, el.colision, el.border)
-                        elif el.type == "text":
-                            self.WIN.blit(el.text, (el.x, el.y))
             except Exception as err:
                 print(err)
-        if self.showfps:
-            text = self.font_fps.render(
-                "FPS: " + str(round(self.clock.get_fps())), True, (0, 0, 0)
-            )
-            self.WIN.blit(text, (10, 15))
-        pygame.display.update()
         self.endtime = time.time()
         return str((self.endtime - self.starttime) / 1000)[:5] + "ms"
 

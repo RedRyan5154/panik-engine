@@ -3,7 +3,7 @@ import sys
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.0.6")
+print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.0.7")
 
 import pygame
 from pygame.locals import *
@@ -18,11 +18,14 @@ pygame.init()
 
 
 from panik_core.window import *
+from panik_core.subwindow import *
 from panik_core.image import *
 from panik_core.animation import *
 from panik_core.object import *
 from panik_core.sprite import *
 from panik_core.colision import *
+from panik_core.rect import *
+from panik_core.text import *
 from panik_core.mouse import *
 from panik_core.parent import *
 from panik_core.audio import *
@@ -96,6 +99,18 @@ k6 = pygame.K_6
 k7 = pygame.K_7
 k8 = pygame.K_8
 k9 = pygame.K_9
+kF1 = pygame.K_F1
+kF2 = pygame.K_F2
+kF3 = pygame.K_F3
+kF4 = pygame.K_F4
+kF5 = pygame.K_F5
+kF6 = pygame.K_F6
+kF7 = pygame.K_F7
+kF8 = pygame.K_F8
+kF9 = pygame.K_F9
+kF10 = pygame.K_F10
+kF11 = pygame.K_F11
+kF12 = pygame.K_F12
 
 
 class Events:
