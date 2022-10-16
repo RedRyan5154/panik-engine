@@ -368,7 +368,7 @@ small,
 mark,
 .mark {
   padding: 0.2em;
-  background-color: yellow; }
+  background-color: #fcf8e3; }
 
 .list-unstyled {
   padding-left: 0;
@@ -6576,3 +6576,14 @@ mark.secondary {
   .animate-in-right.out-of-viewport {
     opacity: 0;
     left: 5%; }
+
+.zoom {
+  transition: -webkit-transform .2s;
+  transition: transform .2s;
+  transition: transform .2s, -webkit-transform .2s;
+  /* Animation */ }
+
+.zoom:hover {
+  -webkit-transform: scale(1.1);
+          transform: scale(1.1);
+  /* (150% zoom - Note: if the zoom is too large, it will go outside of the viewport) */ }
