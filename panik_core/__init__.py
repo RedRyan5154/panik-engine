@@ -3,36 +3,24 @@ import sys
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.0.7")
+print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.1.0")
 
 import pygame
 from pygame.locals import *
-import time
 import pygame_gui
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.font.init()
 pygame.init()
 
-# ^^^^^^^^^^^ Prepare all Modules
-
 
 from panik_core.window import *
-from panik_core.subwindow import *
-from panik_core.image import *
-from panik_core.animation import *
-from panik_core.object import *
-from panik_core.sprite import *
-from panik_core.colision import *
-from panik_core.rect import *
-from panik_core.text import *
-from panik_core.mouse import *
-from panik_core.parent import *
-from panik_core.audio import *
+from panik_core.game_object import *
+from panik_core.assets import *
 from panik_core.ui import *
 
-
 # ^^^^^^^^^^^ Import submodules
+
 
 QUIT = pygame.QUIT
 BUTTON_CLICKED = pygame_gui.UI_BUTTON_PRESSED
@@ -119,15 +107,10 @@ class Events:
 
 
 class Keys:
-    def getKeys():
+    def get():
         return pygame.key.get_pressed()
 
 
 def quit():
     pygame.quit()
     sys.exit()
-
-
-# ^^^^^^^^^^^ Functions
-
-# ^^^^^^^^^^^ Main stuff
