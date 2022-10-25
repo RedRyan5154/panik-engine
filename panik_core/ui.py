@@ -25,12 +25,12 @@ class UI:
 
 
 class UIButton:
-    def __init__(self, text, manager, x, y, sizex=100, sizey=50, container=None):
+    def __init__(self, text, manager, x, y, w=100, h=50, container=None):
         self.container = container
         self.text = text
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UIButton(
             relative_rect=self.colision,
             text=self.text,
@@ -56,12 +56,12 @@ class UIButton:
 
 
 class UIText:
-    def __init__(self, text, manager, x, y, sizex=200, sizey=100, container=None):
+    def __init__(self, text, manager, x, y, w=200, h=100, container=None):
         self.container = container
         self.text = text
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UITextBox(
             self.text, self.colision, self.manager.manager, container=self.container
         )
@@ -83,12 +83,12 @@ class UIText:
 
 
 class UILabel:
-    def __init__(self, text, manager, x, y, sizex=400, sizey=100, container=None):
+    def __init__(self, text, manager, x, y, w=400, h=100, container=None):
         self.container = container
         self.text = text
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UILabel(
             self.colision,
             self.text,
@@ -113,12 +113,12 @@ class UILabel:
 
 
 class UITextEntry:
-    def __init__(self, text, manager, x, y, sizex=200, sizey=50, container=None):
+    def __init__(self, text, manager, x, y, w=200, h=50, container=None):
         self.container = container
         self.text = text
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((x, y), (sizex, sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((x, y), (w, h))
         self.element = pygame_gui.elements.UITextEntryLine(
             self.colision, self.manager.manager, container=self.container
         )
@@ -145,12 +145,12 @@ class UITextEntry:
 
 
 class UICredEntry:
-    def __init__(self, text, manager, x, y, sizex=200, sizey=50, container=None):
+    def __init__(self, text, manager, x, y, w=200, h=50, container=None):
         self.container = container
         self.text = text
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((x, y), (sizex, sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((x, y), (w, h))
         self.element = pygame_gui.elements.UITextEntryLine(
             self.colision, self.manager.manager, container=self.container
         )
@@ -185,16 +185,16 @@ class UIDropDownMenu:
         manager,
         x,
         y,
-        sizex=100,
-        sizey=25,
+        w=100,
+        h=25,
         container=None,
     ):
         self.container = container
         self.options = options
         self.default_option = default_option
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UIDropDownMenu(
             self.options,
             self.default_option,
@@ -225,8 +225,8 @@ class UIHorizontalSlider:
         manager,
         x,
         y,
-        sizex=200,
-        sizey=25,
+        w=200,
+        h=25,
         starting_value=0,
         range=(0, 100),
         container=None,
@@ -235,8 +235,8 @@ class UIHorizontalSlider:
         self.range = range
         self.starting_value = starting_value
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UIHorizontalSlider(
             self.colision,
             self.starting_value,
@@ -263,13 +263,13 @@ class UIHorizontalSlider:
 
 class UISelectionList:
     def __init__(
-        self, options, default, manager, x, y, sizex=200, sizey=200, container=None
+        self, options, default, manager, x, y, w=200, h=200, container=None
     ):
         self.container = container
         self.options = options
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UISelectionList(
             self.colision,
             self.options,
@@ -299,12 +299,12 @@ class UISelectionList:
 
 
 class UICheckList:
-    def __init__(self, options, manager, x, y, sizex=200, sizey=200, container=None):
+    def __init__(self, options, manager, x, y, w=200, h=200, container=None):
         self.container = container
         self.options = options
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UISelectionList(
             self.colision,
             self.options,
@@ -344,13 +344,13 @@ class UIImage:
 
 
 class UIConfirmationDialog:
-    def __init__(self, title, text, manager, x, y, sizex=260, sizey=200, priority=True):
+    def __init__(self, title, text, manager, x, y, w=260, h=200, priority=True):
         self.text = text
         self.title = title
         self.priority = priority
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.windows.UIConfirmationDialog(
             self.colision,
             self.manager.manager,
@@ -383,16 +383,16 @@ class UIFileDialog:
         manager,
         x,
         y,
-        sizex=600,
-        sizey=400,
+        w=600,
+        h=400,
         allow_existing_files_only=False,
         allow_picking_directories=False,
     ):
         self.initial_path = initial_path
         self.title = title
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.windows.UIFileDialog(
             self.colision,
             self.manager.manager,
@@ -425,15 +425,15 @@ class UIWindow:
         manager,
         x,
         y,
-        sizex=600,
-        sizey=400,
+        w=600,
+        h=400,
         resizable=False,
     ):
         self.resizable = resizable
         self.title = title
         self.manager = manager
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UIWindow(
             self.colision, self.manager.manager, self.title, resizable=resizable
         )
@@ -458,9 +458,9 @@ class UIWindow:
 
 
 class UIContainer:
-    def __init__(self, manager, x, y, sizex=600, sizey=400, container=None):
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+    def __init__(self, manager, x, y, w=600, h=400, container=None):
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UIScrollingContainer(
             self.colision,
             manager.manager,
@@ -483,9 +483,9 @@ class UIContainer:
 
 
 class UIPanel:
-    def __init__(self, manager, x, y, sizex=600, sizey=400, container=None):
-        self.x, self.y, self.sizex, self.sizey = x, y, sizex, sizey
-        self.colision = pygame.Rect((self.x, self.y), (self.sizex, self.sizey))
+    def __init__(self, manager, x, y, w=600, h=400, container=None):
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.colision = pygame.Rect((self.x, self.y), (self.w, self.h))
         self.element = pygame_gui.elements.UIPanel(
             self.colision, 1, manager.manager, container=container
         )
