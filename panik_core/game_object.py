@@ -14,15 +14,20 @@ class TileMap:
         self.assets = assets
 
         ## tile map
-        self.colisions = []
         self.tiles = []
-        if type(tile_list) == list:
-            for y, row in enumerate(tile_list):
-                rowl = []
-                rowc = []
-                for x, tile in enumerate(row):
-                    if assets[tile][0] != None:
-                        rowl.append(
+
+        ## store tile map
+        f = open(tile_list, "r")
+        data = f.read()
+        f.close()
+        data = data.split("\n")
+
+        for y, row in enumerate(data):
+            _tmprow = []
+            for x, tile in enumerate(list(row)):
+                if assets[tile][0] != None:  ## if tile is not empty
+                    if assets[tile][1]:  ## if tile has colision
+                        _thing = (
                             pygame.transform.scale(
                                 assets[tile][0].image,
                                 (
@@ -30,33 +35,17 @@ class TileMap:
                                     scale * assets[tile][0].image.get_height() / 100,
                                 ),
                             ),
-                        )
-                    else:
-                        rowl.append(None)
-                    if assets[tile][1] and assets[tile][0] != None:
-                        rowc.append(
                             pygame.Rect(
                                 self.x + x,
                                 self.y + y,
                                 scale * assets[tile][0].image.get_width() / 100,
                                 scale * assets[tile][0].image.get_height() / 100,
-                            )
+                            ),
+                            assets[tile][2],
                         )
+                        _tmprow.append(_thing)
                     else:
-                        rowc.append(None)
-                self.tiles.append(rowl)
-                self.colisions.append(rowc)
-        else:
-            f = open(tile_list, "r")
-            data = f.read()
-            f.close()
-            data = data.split("\n")
-            for y, row in enumerate(data):
-                rowl = []
-                rowc = []
-                for x, tile in enumerate(list(row)):
-                    if assets[tile][0] != None:
-                        rowl.append(
+                        _thing = (
                             pygame.transform.scale(
                                 assets[tile][0].image,
                                 (
@@ -64,22 +53,13 @@ class TileMap:
                                     scale * assets[tile][0].image.get_height() / 100,
                                 ),
                             ),
+                            None,
+                            assets[tile][2],
                         )
-                    else:
-                        rowl.append(None)
-                    if assets[tile][1] and assets[tile][0] != None:
-                        rowc.append(
-                            pygame.Rect(
-                                self.x + x,
-                                self.y + y,
-                                scale * assets[tile][0].image.get_width() / 100,
-                                scale * assets[tile][0].image.get_height() / 100,
-                            )
-                        )
-                    else:
-                        rowc.append(None)
-                self.tiles.append(rowl)
-                self.colisions.append(rowc)
+                        _tmprow.append(_thing)
+                else:
+                    _tmprow.append((None,))
+            self.tiles.append(_tmprow)
 
 
 class Text:
@@ -151,7 +131,7 @@ class Element:
 
     def is_coliding(self, colision):
         if type(colision) == list:
-            return not self.colision.collidelist(colision)
+            return self.colision.collidelist(colision)
         else:
             return self.colision.colliderect(colision)
 

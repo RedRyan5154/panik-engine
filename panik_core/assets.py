@@ -6,6 +6,13 @@ class Image:
     def __init__(self, path):
         self.image = pygame.image.load(path).convert_alpha()
 
+    def scale_image(self, scale):
+        self.scale = scale
+        self.w = scale * self.image.get_width() / 100
+        self.h = scale * self.image.get_height() / 100
+
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
+
 
 class Animation:
     def __init__(self, path):

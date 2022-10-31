@@ -163,42 +163,45 @@ class Window:
             elif element.type == "tilemap":
                 for y, row in enumerate(element.tiles):
                     for x, tile in enumerate(row):
-                        if tile != None:
+                        if tile[0] != None:
                             self.WIN.blit(
-                                tile,
+                                tile[0],
                                 (
                                     element.x
-                                    + x * tile.get_width()
+                                    + x * tile[0].get_width()
                                     - self.camara.x
                                     - self.camara.chx,
                                     element.y
-                                    + y * tile.get_height()
+                                    + y * tile[0].get_height()
                                     - self.camara.y
                                     - self.camara.chy,
                                 ),
                             )
-                            if element.colisions[y][x]:
-                                element.colisions[y][x].x = (
+                            if tile[1]:
+                                tile[1].x = (
                                     element.x
-                                    + x * tile.get_width()
+                                    + x * tile[0].get_width()
                                     - self.camara.x
                                     - self.camara.chx
                                 )
 
-                                element.colisions[y][x].y = (
+                                tile[1].y = (
                                     element.y
-                                    + y * tile.get_height()
+                                    + y * tile[0].get_height()
                                     - self.camara.y
                                     - self.camara.chy
                                 )
                         if self.devmode:
-                            if element.colisions[y][x]:
+                            if tile[0] != None and tile[1]:
                                 pygame.draw.rect(
                                     self.WIN,
                                     (0, 0, 0),
-                                    element.colisions[y][x],
+                                    tile[1],
                                     2,
                                 )
+                        if tile[0] != None:
+                            if tile[2] != None:
+                                tile[2]((tile, x, y))
 
         ## ui
         if ui:
