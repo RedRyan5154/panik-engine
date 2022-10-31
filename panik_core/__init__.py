@@ -3,7 +3,6 @@ import sys
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-=======
 print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.8.0")
 
 import pygame
