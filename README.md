@@ -21,24 +21,25 @@ from panik_core import *
 ```
 # A minimal window
 ```python
-from panik_core import *
+import panik_core
 
-window = Window("A minimal window", 600, 400) # create a window
-window.background = (255, 255, 255)
+window = panik_core.Window("My test window", 600, 400)  # create a window
 window.showfps = True
 
-ev = Events() # event object
 
-def  main():
-	run = 1
-	while  run:
-		window.tick(30) # set fps
-		events = ev.get()
-		for  event  in  events:
-			if  event.type == ev.QUIT:
-				run = 0
-		window.update() # update the window
+def main():
+    run = 1
+    while run:
+        window.tick(30)  # clock at 30 FPS
+        for event in panik_core.Events.get():
+            if event.type == panik_core.QUIT:
+                run = 0
+                panik_core.quit()
 
-if  __name__ == '__main__':
-	main()
+        window.render()
+
+
+if __name__ == "__main__":
+    main()
+
 ```
