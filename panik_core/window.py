@@ -17,6 +17,11 @@ class Window:
             self.chx = random.randint(-intensity, intensity)
             self.chy = random.randint(-intensity, intensity)
 
+        def camara_shake_float(self, intensity: int):
+            """Give a int and camera shake will be 100 times smaller"""
+            self.chx = random.randint(-intensity, intensity) / 100
+            self.chy = random.randint(-intensity, intensity) / 100
+
     def __init__(self, title, width, height, icon=None):
         """
         Creates a window
@@ -46,7 +51,11 @@ class Window:
         self.WIN = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption(title)
         if self.icon:
-            pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
+            pygame.display.set_icon(
+                pygame.transform.scale(
+                    pygame.image.load(icon).convert_alpha(), (256, 256)
+                )
+            )
         else:
             pygame.display.set_icon(
                 pygame.image.load("panik_core/asstes/logolowres.png").convert_alpha()
@@ -104,12 +113,12 @@ class Window:
 
                 ## transform image
 
-                if element.prevrot != element.rotation:
+                if element.rotation != 0:
                     image = pygame.transform.rotate(element.image, element.rotation)
+                    if element.rotation > 360 or element.rotation < -360:
+                        element.rotation = 0
                 else:
                     image = element.image
-
-                element.prevrot = element.rotation
 
                 ## center image
                 draw_x = (
@@ -150,14 +159,8 @@ class Window:
                 self.WIN.blit(
                     element.text,
                     (
-                        element.x
-                        - element.text.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx,
-                        element.y
-                        - element.text.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy,
+                        element.x - self.camara.x - self.camara.chx,
+                        element.y - self.camara.y - self.camara.chy,
                     ),
                 )
             elif element.type == "tilemap":
@@ -202,6 +205,72 @@ class Window:
                         if tile[0] != None:
                             if tile[2] != None:
                                 tile[2]((tile, x, y))
+            elif element.type == "rect":
+                ## center image
+                draw_x = (
+                    element.x
+                    - element.image.get_width() / 2
+                    - self.camara.x
+                    - self.camara.chx
+                )
+                draw_y = (
+                    element.y
+                    - element.image.get_height() / 2
+                    - self.camara.y
+                    - self.camara.chy
+                )
+
+                ## blit image
+                self.WIN.blit(element.image, (draw_x, draw_y))
+            elif element.type == "particle":
+
+                ## transform image
+
+                if element.rotation != 0:
+                    image = pygame.transform.rotate(element.image, element.rotation)
+                    if element.rotation > 360 or element.rotation < -360:
+                        element.rotation = 0
+                else:
+                    image = element.image
+
+                ## center image
+                draw_x = (
+                    element.x - image.get_width() / 2 - self.camara.x - self.camara.chx
+                )
+                draw_y = (
+                    element.y - image.get_height() / 2 - self.camara.y - self.camara.chy
+                )
+
+                ## blit image
+                self.WIN.blit(image, (draw_x, draw_y))
+
+                ## colision
+                if element.colision:
+                    ## center colision
+                    element.colision.x = (
+                        element.x
+                        + element.cx
+                        - element.cw / 2
+                        - self.camara.x
+                        - self.camara.chx
+                    )
+                    element.colision.y = (
+                        element.y
+                        + element.cy
+                        - element.ch / 2
+                        - self.camara.y
+                        - self.camara.chy
+                    )
+
+                    if self.devmode:
+                        text = self.font.render("ID: " + element.id, True, (0, 0, 0))
+                        pygame.draw.rect(self.WIN, (0, 0, 0), element.colision, 4)
+                        self.WIN.blit(
+                            text, (element.colision.x, element.colision.y - 25)
+                        )
+
+        self.camara.chx = 0
+        self.camara.chy = 0
 
         ## ui
         if ui:

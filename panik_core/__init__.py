@@ -3,13 +3,13 @@ import sys
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.8.1")
+print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.8.2")
 
 import pygame
 from pygame.locals import *
 import pygame_gui
 
-pygame.mixer.pre_init(44100, 16, 2, 4096)
+pygame.mixer.init(48000, -16, 1, 1024)
 pygame.font.init()
 pygame.init()
 

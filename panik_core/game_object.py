@@ -1,6 +1,7 @@
 import pygame
 import time
 import math
+import random
 
 
 class TileMap:
@@ -24,7 +25,7 @@ class TileMap:
 
         for y, row in enumerate(data):
             _tmprow = []
-            for x, tile in enumerate(list(row)):
+            for x, tile in enumerate(row.split(",")):
                 if assets[tile][0] != None:  ## if tile is not empty
                     if assets[tile][1]:  ## if tile has colision
                         _thing = (
@@ -79,6 +80,42 @@ class Text:
         self.text = self.font.render(text, True, self.color)
 
 
+class Rect:
+    def __init__(self, x, y, w, h, color=(255, 255, 255)):
+        self.x, self.y = x, y
+        self.w, self.h = w, h
+        self.color_ = color
+        self.image = pygame.Surface((w, h))
+        self.color(self.color_)
+        self.type = "rect"
+
+    def add_colision(self, id, relative_x, relative_y, w, h):
+        self.id = id
+        self.cx = relative_x
+        self.cy = relative_y
+        self.cw = w
+        self.ch = h
+        self.colision = pygame.Rect(
+            self.x + relative_x - w / 2, self.y + relative_y - h / 2, w, h
+        )
+
+    def is_coliding(self, colision):
+        if type(colision) == list:
+            return self.colision.collidelist(colision)
+        else:
+            return self.colision.colliderect(colision)
+
+    def color(self, color=(255, 255, 255)):
+        self.color_ = color
+        self.image.fill(self.color_)
+
+    def resize(self, w, h):
+        self.w = w
+        self.h = h
+
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
+
+
 class Element:
     def __init__(self, image, x, y, scale=100, rotation=0, flip=[False, False]):
 
@@ -100,8 +137,6 @@ class Element:
         self.type = "element"
 
         ## perform the correct transformations
-
-        self.prevrot = self.rotation
 
         self.image = pygame.transform.flip(
             pygame.transform.rotate(
@@ -182,14 +217,8 @@ class Element:
                 self.scale * self.image.get_width() / 100,
                 self.scale * self.image.get_height() / 100,
             )
-            self.image = pygame.transform.flip(
-                pygame.transform.rotate(
-                    pygame.transform.scale(self.image, (self.w, self.h)),
-                    self.rotation,
-                ),
-                self.flip[0],
-                self.flip[1],
-            )
+            self.image = pygame.transform.flip(self.image, self.flip[0], self.flip[1])
+            self.scale_image(self.scale)
 
     def set_image(self, image):
         ## check if image is pre loaded or not
@@ -200,15 +229,8 @@ class Element:
             self.image = image.image
 
         ## perform the correct transformations
-
-        self.image = pygame.transform.flip(
-            pygame.transform.rotate(
-                pygame.transform.scale(self.image, (self.w, self.h)),
-                self.rotation,
-            ),
-            self.flip[0],
-            self.flip[1],
-        )
+        self.image = pygame.transform.flip(self.image, self.flip[0], self.flip[1])
+        self.scale_image(self.scale)
 
     def scale_image(self, scale):
         self.scale = scale
@@ -241,3 +263,140 @@ class Element:
         self.flip = flip
 
         self.image = pygame.transform.flip(self.image, fx, fy)
+
+
+class Particle:
+    def __init__(self, image, x, y, scale, rotation):
+
+        if type(image) == str:
+            self.image = pygame.image.load(image).convert_alpha()
+        else:
+            self.image = image.image
+
+        self.x, self.y = x, y
+        self.w = scale * self.image.get_width() / 100
+        self.h = scale * self.image.get_height() / 100
+        self.scale = scale
+        self.rotation = rotation
+
+        self.colision = None
+
+        self.type = "particle"
+
+        ## perform the correct transformations
+
+        self.image = pygame.transform.rotate(
+            pygame.transform.scale(self.image, (self.w, self.h)),
+            self.rotation,
+        )
+        ## animation data
+
+        self.animationidx = 0
+        self.starttime = time.time()
+
+    # Colision ------------------------------------------------------------------------#
+
+    def add_colision(self, id, relative_x, relative_y, w, h):
+        self.id = id
+        self.cx = relative_x
+        self.cy = relative_y
+        self.cw = w
+        self.ch = h
+        self.colision = pygame.Rect(
+            self.x + relative_x - w / 2, self.y + relative_y - h / 2, w, h
+        )
+
+    def is_coliding(self, colision):
+        if type(colision) == list:
+            return self.colision.collidelist(colision)
+        else:
+            return self.colision.colliderect(colision)
+
+    # Image Manipulation --------------------------------------------------------------#
+
+    def animate(self, animation, delay=0.1):
+        if time.time() - self.starttime > delay:
+            self.starttime = time.time()
+            if self.animationidx >= len(animation.animations) - 1:
+                self.animationidx = 0
+            else:
+                self.animationidx += 1
+            self.image = list(animation.animations.values())[self.animationidx]
+            self.size_x, self.size_y = (
+                self.scale * self.image.get_width() / 100,
+                self.scale * self.image.get_height() / 100,
+            )
+            self.image = pygame.transform.flip(self.image, self.flip[0], self.flip[1])
+            self.scale_image(self.scale)
+
+    def set_image(self, image):
+        ## check if image is pre loaded or not
+
+        if type(image) == str:
+            self.image = pygame.image.load(image).convert_alpha()
+        else:
+            self.image = image.image
+
+        ## perform the correct transformations
+        self.image = pygame.transform.flip(self.image, self.flip[0], self.flip[1])
+        self.scale_image(self.scale)
+
+    def scale_image(self, scale):
+        self.scale = scale
+        self.w = scale * self.image.get_width() / 100
+        self.h = scale * self.image.get_height() / 100
+
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
+
+    def resize_image(self, w, h):
+        self.w = w
+        self.h = h
+
+        self.image = pygame.transform.scale(self.image, (self.w, self.h))
+
+
+class Music:
+    def __init__(self, audio_file):
+        pygame.mixer.music.load(audio_file)
+
+    def play(self, loops=0, fade_ms=0):
+        pygame.mixer.music.play(loops, fade_ms=fade_ms)
+
+    def stop(self):
+        pygame.mixer.music.stop()
+
+    def pause(self):
+        pygame.mixer.music.pause()
+
+    def unpause(self):
+        pygame.mixer.music.unpause()
+
+    def fade(self, fade):
+        pygame.mixer.music.fadeout(fade)
+
+    def queue(self, audio_file, loops=0):
+        pygame.mixer.music.queue(audio_file, loops=loops)
+
+    def set_volume(self, volume=100):
+        pygame.mixer.music.set_volume(volume / 100)
+
+    @property
+    def volume(self):
+        return pygame.mixer.music.get_volume()
+
+
+class Sound:
+    def __init__(self, audio_file, channel=0):
+        self.audio = audio_file.audio_file
+        self.channel = channel
+
+    def play(self, loops=0, maxtime=0, fade_ms=0):
+        pygame.mixer.Channel(int(self.channel)).play(
+            self.audio, loops, maxtime, fade_ms
+        )
+
+    def stop(self):
+        pygame.mixer.Channel(int(self.channel)).stop(self.audio)
+
+    def set_volume(self, volume=100):
+        pygame.mixer.Channel(int(self.channel)).set_volume(volume / 100)
