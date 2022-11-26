@@ -3,7 +3,7 @@ import sys
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-print("Hello From Panik Studios\nWelcome to Panik-Core Engine V0.8.2")
+print("\n -- Welcome to Panik-Core Engine V0.8.4 --\n")
 
 import pygame
 from pygame.locals import *
@@ -19,6 +19,7 @@ from panik_core.game_object import *
 from panik_core.assets import *
 from panik_core.ui import *
 from panik_core.mouse import *
+from panik_core.utils import *
 
 # ^^^^^^^^^^^ Import submodules
 
@@ -115,3 +116,7 @@ class Keys:
 def quit():
     pygame.quit()
     sys.exit()
+
+
+def optimize():
+    pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])

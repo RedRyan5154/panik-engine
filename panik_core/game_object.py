@@ -5,7 +5,9 @@ import random
 
 
 class TileMap:
-    def __init__(self, tile_list, assets, scale, x, y):
+    def __init__(self, tile_list, assets, scale, x, y, parent=None):
+        """tile_list: map.pkmap file with all tile position
+        assets: (pk.Image | None, "Colision"|Bool, "Function"|None)ss"""
 
         ## meta
         self.type = "tilemap"
@@ -16,6 +18,7 @@ class TileMap:
 
         ## tile map
         self.tiles = []
+        self.parent = parent
 
         ## store tile map
         f = open(tile_list, "r")
@@ -64,7 +67,7 @@ class TileMap:
 
 
 class Text:
-    def __init__(self, text, x, y, font=None, size=20, color=(0, 0, 0)):
+    def __init__(self, text, x, y, font=None, size=20, color=(0, 0, 0), parent=None):
         if type(font) == str or font == None:
             self.font = pygame.font.Font(font, size)
         else:
@@ -75,19 +78,21 @@ class Text:
         self.text = self.font.render(text, True, self.color)
 
         self.type = "text"
+        self.parent = parent
 
     def render_text(self, text):
         self.text = self.font.render(text, True, self.color)
 
 
 class Rect:
-    def __init__(self, x, y, w, h, color=(255, 255, 255)):
+    def __init__(self, x, y, w, h, color=(255, 255, 255), parent=None):
         self.x, self.y = x, y
         self.w, self.h = w, h
         self.color_ = color
         self.image = pygame.Surface((w, h))
         self.color(self.color_)
         self.type = "rect"
+        self.parent = parent
 
     def add_colision(self, id, relative_x, relative_y, w, h):
         self.id = id
@@ -117,7 +122,9 @@ class Rect:
 
 
 class Element:
-    def __init__(self, image, x, y, scale=100, rotation=0, flip=[False, False]):
+    def __init__(
+        self, image, x, y, scale=100, rotation=0, flip=[False, False], parent=None
+    ):
 
         ## check if image is pre loaded or not
 
@@ -135,6 +142,7 @@ class Element:
         self.colision = None
 
         self.type = "element"
+        self.parent = parent
 
         ## perform the correct transformations
 
@@ -151,6 +159,7 @@ class Element:
 
         self.animationidx = 0
         self.starttime = time.time()
+        self.prevanimation = None
 
     # Colision ------------------------------------------------------------------------#
 
@@ -206,6 +215,9 @@ class Element:
     # Image Manipulation --------------------------------------------------------------#
 
     def animate(self, animation, delay=0.1):
+        if self.prevanimation != animation:
+            self.animationidx = 0
+            self.prevanimation = animation
         if time.time() - self.starttime > delay:
             self.starttime = time.time()
             if self.animationidx >= len(animation.animations) - 1:
@@ -266,7 +278,7 @@ class Element:
 
 
 class Particle:
-    def __init__(self, image, x, y, scale, rotation):
+    def __init__(self, image, x, y, scale, rotation, parent=None):
 
         if type(image) == str:
             self.image = pygame.image.load(image).convert_alpha()
@@ -282,6 +294,7 @@ class Particle:
         self.colision = None
 
         self.type = "particle"
+        self.parent = parent
 
         ## perform the correct transformations
 
@@ -353,6 +366,12 @@ class Particle:
         self.h = h
 
         self.image = pygame.transform.scale(self.image, (self.w, self.h))
+
+
+class Parent:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
 class Music:

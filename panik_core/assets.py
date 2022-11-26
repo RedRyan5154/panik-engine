@@ -38,7 +38,7 @@ class Font:
         self.font = pygame.font.Font(font, size)
 
 
-class Spritesheet:
+class TileSet:
     def __init__(self, filename):
         self.sheet = pygame.image.load(filename).convert_alpha()
 
@@ -53,11 +53,18 @@ class Spritesheet:
             return re
         return None
 
-    def load(self, dimensions=16):
+    def load(self, tile_dimensions=16):
         images = []
-        for x in range(int(self.sheet.get_width() / dimensions)):
-            for y in range(int(self.sheet.get_height() / dimensions)):
-                img = self.image_at((y * 16, x * 16, 16, 16))
+        for x in range(int(self.sheet.get_height() / tile_dimensions)):
+            for y in range(int(self.sheet.get_width() / tile_dimensions)):
+                img = self.image_at(
+                    (
+                        y * tile_dimensions,
+                        x * tile_dimensions,
+                        tile_dimensions,
+                        tile_dimensions,
+                    )
+                )
                 if img != None:
                     images.append(img)
         return images
