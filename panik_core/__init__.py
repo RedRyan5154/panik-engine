@@ -116,3 +116,7 @@ class Keys:
 def quit():
     pygame.quit()
     sys.exit()
+
+
+def optimize():
+    pygame.event.set_allowed([QUIT, KEYDOWN, KEYUP])

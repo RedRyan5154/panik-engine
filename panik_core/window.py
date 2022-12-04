@@ -59,7 +59,9 @@ class Window:
             )
         else:
             pygame.display.set_icon(
-                pygame.image.load("panik_core/asstes/logolowres.png").convert_alpha()
+                pygame.image.load(
+                    "code/panik_core/asstes/logolowres.png"
+                ).convert_alpha()
             )
 
         ##fps
@@ -220,6 +222,19 @@ class Window:
                     ):
                         continue
                     for x, tile in enumerate(row):
+                        if (  # if tile is off window, skip following collums
+                            x * tile[0].get_width()
+                            + element.x
+                            - self.camara.x
+                            - self.camara.chx
+                            > self.winsize[0]
+                            or (x + 1) * tile[0].get_width()
+                            + element.x
+                            - self.camara.x
+                            - self.camara.chx
+                            < 0
+                        ):
+                            continue
                         if tile[0] != None:
                             if (  # if tile is off window, skip following collums
                                 x * element.tile_size
@@ -286,6 +301,7 @@ class Window:
                                     + x * element.tile_size
                                     - self.camara.x
                                     - self.camara.chx
+                                    + element.parent.x
                                 )
 
                                 tile[1].y = (
@@ -293,6 +309,7 @@ class Window:
                                     + y * element.tile_size
                                     - self.camara.y
                                     - self.camara.chy
+                                    + element.parent.y
                                 )
                             if self.devmode:
                                 if tile[0] != None and tile[1]:

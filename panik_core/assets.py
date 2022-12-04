@@ -54,7 +54,7 @@ class TileSet:
         # return None
         return Image(image)
 
-    def load(self, tile_dimensions=16) -> list:
+    def load(self, tile_dimensions=16):
         images = []
         for x in range(int(self.sheet.get_height() / tile_dimensions)):
             for y in range(int(self.sheet.get_width() / tile_dimensions)):
