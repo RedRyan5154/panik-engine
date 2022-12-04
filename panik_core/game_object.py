@@ -5,7 +5,9 @@ import random
 
 
 class TileMap:
-    def __init__(self, tile_list, assets, scale, x, y):
+    def __init__(self, tile_list, tile_size, assets, scale, x, y, parent=None):
+        """tile_list: map.pkmap file with all tile position
+        assets: {"id":(pk.Image | None, "Colision"|Bool, "Function"|None)}"""
 
         ## meta
         self.type = "tilemap"
@@ -13,9 +15,11 @@ class TileMap:
         self.y = y
         self.scale = scale
         self.assets = assets
+        self.tile_size = tile_size * scale / 100
 
         ## tile map
         self.tiles = []
+        self.parent = parent
 
         ## store tile map
         f = open(tile_list, "r")
@@ -23,48 +27,28 @@ class TileMap:
         f.close()
         data = data.split("\n")
 
+        if data[len(data) - 1] == "":
+            del data[len(data) - 1]
+
         for y, row in enumerate(data):
             _tmprow = []
             for x, tile in enumerate(row.split(",")):
-                if assets[tile][0] != None:  ## if tile is not empty
-                    if assets[tile][1]:  ## if tile has colision
-                        _thing = (
-                            pygame.transform.scale(
-                                assets[tile][0].image,
-                                (
-                                    scale * assets[tile][0].image.get_width() / 100,
-                                    scale * assets[tile][0].image.get_height() / 100,
-                                ),
-                            ),
-                            pygame.Rect(
-                                self.x + x,
-                                self.y + y,
-                                scale * assets[tile][0].image.get_width() / 100,
-                                scale * assets[tile][0].image.get_height() / 100,
-                            ),
-                            assets[tile][2],
-                        )
-                        _tmprow.append(_thing)
-                    else:
-                        _thing = (
-                            pygame.transform.scale(
-                                assets[tile][0].image,
-                                (
-                                    scale * assets[tile][0].image.get_width() / 100,
-                                    scale * assets[tile][0].image.get_height() / 100,
-                                ),
-                            ),
-                            None,
-                            assets[tile][2],
-                        )
-                        _tmprow.append(_thing)
-                else:
+                if tile == "-1":
                     _tmprow.append((None,))
+                    continue
+                _thing = pygame.transform.scale(
+                    assets[tile].image,
+                    (
+                        scale * assets[tile].image.get_width() / 100,
+                        scale * assets[tile].image.get_height() / 100,
+                    ),
+                )
+                _tmprow.append((_thing, False, None))
             self.tiles.append(_tmprow)
 
 
 class Text:
-    def __init__(self, text, x, y, font=None, size=20, color=(0, 0, 0)):
+    def __init__(self, text, x, y, font=None, size=20, color=(0, 0, 0), parent=None):
         if type(font) == str or font == None:
             self.font = pygame.font.Font(font, size)
         else:
@@ -75,19 +59,21 @@ class Text:
         self.text = self.font.render(text, True, self.color)
 
         self.type = "text"
+        self.parent = parent
 
     def render_text(self, text):
         self.text = self.font.render(text, True, self.color)
 
 
 class Rect:
-    def __init__(self, x, y, w, h, color=(255, 255, 255)):
+    def __init__(self, x, y, w, h, color=(255, 255, 255), parent=None):
         self.x, self.y = x, y
         self.w, self.h = w, h
         self.color_ = color
         self.image = pygame.Surface((w, h))
         self.color(self.color_)
         self.type = "rect"
+        self.parent = parent
 
     def add_colision(self, id, relative_x, relative_y, w, h):
         self.id = id
@@ -117,7 +103,9 @@ class Rect:
 
 
 class Element:
-    def __init__(self, image, x, y, scale=100, rotation=0, flip=[False, False]):
+    def __init__(
+        self, image, x, y, scale=100, rotation=0, flip=[False, False], parent=None
+    ):
 
         ## check if image is pre loaded or not
 
@@ -135,6 +123,7 @@ class Element:
         self.colision = None
 
         self.type = "element"
+        self.parent = parent
 
         ## perform the correct transformations
 
@@ -151,6 +140,7 @@ class Element:
 
         self.animationidx = 0
         self.starttime = time.time()
+        self.prevanimation = None
 
     # Colision ------------------------------------------------------------------------#
 
@@ -206,6 +196,10 @@ class Element:
     # Image Manipulation --------------------------------------------------------------#
 
     def animate(self, animation, delay=0.1):
+        if self.prevanimation != animation:
+            self.animationidx = 0
+            self.prevanimation = animation
+            self.starttime = time.time() - delay
         if time.time() - self.starttime > delay:
             self.starttime = time.time()
             if self.animationidx >= len(animation.animations) - 1:
@@ -266,7 +260,7 @@ class Element:
 
 
 class Particle:
-    def __init__(self, image, x, y, scale, rotation):
+    def __init__(self, image, x, y, scale, rotation, parent=None):
 
         if type(image) == str:
             self.image = pygame.image.load(image).convert_alpha()
@@ -282,6 +276,7 @@ class Particle:
         self.colision = None
 
         self.type = "particle"
+        self.parent = parent
 
         ## perform the correct transformations
 
@@ -353,6 +348,12 @@ class Particle:
         self.h = h
 
         self.image = pygame.transform.scale(self.image, (self.w, self.h))
+
+
+class Parent:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 
 class Music:
