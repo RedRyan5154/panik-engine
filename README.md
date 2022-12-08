@@ -9,7 +9,7 @@ THE python graphical library
 The panik-core engine was built around pygame removing small mistakes that often unexperienced pygame developers do that feed on performance.  With panik-core, you will finish your first project in no time with the help of pre-made game object classes such as Entitys with collision, Parents and its sophisticated gui widgets using pygame_gui.
 
 ---
-```
+
 # A minimal window
 ```python
 import panik_core as pk
