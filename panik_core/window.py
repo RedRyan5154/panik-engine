@@ -59,9 +59,7 @@ class Window:
             )
         else:
             pygame.display.set_icon(
-                pygame.image.load(
-                    "code/panik_core/asstes/logolowres.png"
-                ).convert_alpha()
+                pygame.image.load("panik_core/asstes/logolowres.png").convert_alpha()
             )
 
         ##fps
@@ -322,25 +320,7 @@ class Window:
                             if tile[2] != None:
                                 tile[2]((tile, x, y))
             elif element.type == "rect":
-                ## center image
-                if element.parent:
-                    draw_x = (
-                        element.x
-                        - element.image.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx
-                        + element.parent.x
-                    )
-                    draw_y = (
-                        element.y
-                        - element.image.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy
-                        + element.parent.y
-                    )
-
-                ## blit image
-                self.WIN.blit(element.image, (draw_x, draw_y))
+                pygame.draw.rect(self.WIN, element.color, element)
             elif element.type == "particle":
 
                 ## transform image
