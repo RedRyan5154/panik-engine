@@ -49,7 +49,9 @@ class Window:
         self.devmode = False
         self.icon = icon
         self.bg = (255, 255, 255)
-        self.WIN = pygame.display.set_mode((self.width, self.height), display=0)
+        self.WIN = pygame.display.set_mode(
+            (self.width, self.height), pygame.SCALED, display=0
+        )
         pygame.display.set_caption(title)
         if self.icon:
             pygame.display.set_icon(
@@ -59,9 +61,7 @@ class Window:
             )
         else:
             pygame.display.set_icon(
-                pygame.image.load(
-                    "code/panik_core/asstes/logolowres.png"
-                ).convert_alpha()
+                pygame.image.load("panik_core/asstes/logolowres.png").convert_alpha()
             )
 
         ##fps
@@ -237,15 +237,19 @@ class Window:
                             continue
                         if tile[0] != None:
                             if (  # if tile is off window, skip following collums
-                                x * element.tile_size
-                                + element.x
-                                - self.camara.x
-                                - self.camara.chx
+                                int(
+                                    x * element.tile_size
+                                    + element.x
+                                    - self.camara.x
+                                    - self.camara.chx
+                                )
                                 > self.winsize_cache[0]
-                                or (x + 1) * element.tile_size
-                                + element.x
-                                - self.camara.x
-                                - self.camara.chx
+                                or int(
+                                    (x + 1) * element.tile_size
+                                    + element.x
+                                    - self.camara.x
+                                    - self.camara.chx
+                                )
                                 < 0
                             ):
                                 continue
@@ -253,18 +257,23 @@ class Window:
                                 self.WIN.blit(
                                     tile[0],
                                     (
-                                        element.x
-                                        + x * element.tile_size
-                                        - self.camara.x
-                                        - self.camara.chx
-                                        + element.parent.x,
-                                        element.y
-                                        + y * element.tile_size
-                                        - self.camara.y
-                                        - self.camara.chy
-                                        + element.parent.y,
+                                        int(
+                                            element.x
+                                            + x * element.tile_size
+                                            - self.camara.x
+                                            - self.camara.chx
+                                            + element.parent.x
+                                        ),
+                                        int(
+                                            element.y
+                                            + y * element.tile_size
+                                            - self.camara.y
+                                            - self.camara.chy
+                                            + element.parent.y
+                                        ),
                                     ),
                                 )
+
                             else:
                                 self.WIN.blit(
                                     tile[0],
@@ -322,25 +331,7 @@ class Window:
                             if tile[2] != None:
                                 tile[2]((tile, x, y))
             elif element.type == "rect":
-                ## center image
-                if element.parent:
-                    draw_x = (
-                        element.x
-                        - element.image.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx
-                        + element.parent.x
-                    )
-                    draw_y = (
-                        element.y
-                        - element.image.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy
-                        + element.parent.y
-                    )
-
-                ## blit image
-                self.WIN.blit(element.image, (draw_x, draw_y))
+                pygame.draw.rect(self.WIN, element.color, element)
             elif element.type == "particle":
 
                 ## transform image

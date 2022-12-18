@@ -16,6 +16,8 @@ class TileMap:
         self.scale = scale
         self.assets = assets
         self.tile_size = tile_size * scale / 100
+        if not str(self.tile_size).endswith(".0"):
+            self.tile_size = round(self.tile_size) - 1
 
         ## tile map
         self.tiles = []
@@ -29,6 +31,9 @@ class TileMap:
 
         if data[len(data) - 1] == "":
             del data[len(data) - 1]
+
+        self.width = len(data[0]) * self.tile_size
+        self.height = len(data) * self.tile_size
 
         for y, row in enumerate(data):
             _tmprow = []
@@ -57,6 +62,8 @@ class Text:
         self.y = y
         self.color = color
         self.text = self.font.render(text, True, self.color)
+        self.x = x - self.text.get_width() / 2
+        self.y = y - self.text.get_height() / 2
 
         self.type = "text"
         self.parent = parent
@@ -65,41 +72,36 @@ class Text:
         self.text = self.font.render(text, True, self.color)
 
 
-class Rect:
+class Rect(pygame.Rect):
     def __init__(self, x, y, w, h, color=(255, 255, 255), parent=None):
-        self.x, self.y = x, y
-        self.w, self.h = w, h
-        self.color_ = color
-        self.image = pygame.Surface((w, h))
-        self.color(self.color_)
+        super().__init__(x, y, w, h)
+        self.color = color
         self.type = "rect"
         self.parent = parent
-
-    def add_colision(self, id, relative_x, relative_y, w, h):
-        self.id = id
-        self.cx = relative_x
-        self.cy = relative_y
-        self.cw = w
-        self.ch = h
-        self.colision = pygame.Rect(
-            self.x + relative_x - w / 2, self.y + relative_y - h / 2, w, h
-        )
+        self.fill = True
 
     def is_coliding(self, colision):
         if type(colision) == list:
-            return self.colision.collidelist(colision)
+            return 1 if self.collidelist(colision) != -1 else 0
         else:
-            return self.colision.colliderect(colision)
+            if colision.type == "rect":
+                return self.colliderect(colision)
+            else:
+                return self.colliderect(colision.colision)
 
-    def color(self, color=(255, 255, 255)):
-        self.color_ = color
-        self.image.fill(self.color_)
+    def try_move_x(self, x, colisions=[]):
+        self.x += x
+        if self.is_coliding(colisions):
+            self.x -= x
+            return False
+        return True
 
-    def resize(self, w, h):
-        self.w = w
-        self.h = h
-
-        self.image = pygame.transform.scale(self.image, (self.w, self.h))
+    def try_move_y(self, y, colisions=[]):
+        self.y += y
+        if self.is_coliding(colisions):
+            self.y -= y
+            return False
+        return True
 
 
 class Element:
@@ -156,9 +158,12 @@ class Element:
 
     def is_coliding(self, colision):
         if type(colision) == list:
-            return self.colision.collidelist(colision)
+            return 1 if self.collidelist(colision) != -1 else 0
         else:
-            return self.colision.colliderect(colision)
+            if colision.type == "rect":
+                return self.colliderect(colision)
+            else:
+                return self.colliderect(colision.colision)
 
     # Movement ------------------------------------------------------------------------#
 

@@ -1,5 +1,6 @@
 import pygame
 import time as tm
+import random
 
 
 class Vec2(pygame.math.Vector2):
@@ -23,3 +24,7 @@ class Timer:
 
     def reset(self):
         self.start_time = tm.time()
+
+
+def sleep(secs):
+    tm.sleep(secs)
