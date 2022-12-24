@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 import time
 import random
-import sys
+import sys, math
 
 
 class Window:
@@ -50,7 +50,7 @@ class Window:
         self.icon = icon
         self.bg = (255, 255, 255)
         self.WIN = pygame.display.set_mode(
-            (self.width, self.height), pygame.SCALED, display=0
+            (self.width, self.height), pygame.SCALED, display=0, vsync=0
         )
         pygame.display.set_caption(title)
         if self.icon:
@@ -101,6 +101,7 @@ class Window:
 
     def setFullscreen(self):
         self.WIN = pygame.display.set_mode((0, 0), FULLSCREEN | DOUBLEBUF, 16)
+        self.winsize_cache = self.winsize
 
     def setTitle(self, title):
         pygame.display.set_caption(title)
@@ -115,7 +116,9 @@ class Window:
 
         ## main loop
         for element in self.queue:
-            if element.type == "element":
+            if element == None:
+                continue
+            elif element.type == "element":
 
                 ## transform image
 
@@ -207,129 +210,15 @@ class Window:
                         ),
                     )
             elif element.type == "tilemap":
-                for y, row in enumerate(element.tiles):
-                    if (  # if tile is off window, skip following collum rows
-                        y * element.tile_size
-                        + element.y
-                        - self.camara.y
-                        - self.camara.chy
-                        > self.winsize_cache[1]
-                        or (y + 1) * element.tile_size
-                        + element.y
-                        - self.camara.y
-                        - self.camara.chy
-                        < 0
-                    ):
-                        continue
-                    for x, tile in enumerate(row):
-                        if (  # if tile is off window, skip following collums
-                            x * tile[0].get_width()
-                            + element.x
-                            - self.camara.x
-                            - self.camara.chx
-                            > self.winsize[0]
-                            or (x + 1) * tile[0].get_width()
-                            + element.x
-                            - self.camara.x
-                            - self.camara.chx
-                            < 0
-                        ):
-                            continue
-                        if tile[0] != None:
-                            if (  # if tile is off window, skip following collums
-                                int(
-                                    x * element.tile_size
-                                    + element.x
-                                    - self.camara.x
-                                    - self.camara.chx
-                                )
-                                > self.winsize_cache[0]
-                                or int(
-                                    (x + 1) * element.tile_size
-                                    + element.x
-                                    - self.camara.x
-                                    - self.camara.chx
-                                )
-                                < 0
-                            ):
-                                continue
-                            if element.parent:
-                                self.WIN.blit(
-                                    tile[0],
-                                    (
-                                        int(
-                                            element.x
-                                            + x * element.tile_size
-                                            - self.camara.x
-                                            - self.camara.chx
-                                            + element.parent.x
-                                        ),
-                                        int(
-                                            element.y
-                                            + y * element.tile_size
-                                            - self.camara.y
-                                            - self.camara.chy
-                                            + element.parent.y
-                                        ),
-                                    ),
-                                )
-
-                            else:
-                                self.WIN.blit(
-                                    tile[0],
-                                    (
-                                        element.x
-                                        + x * element.tile_size
-                                        - self.camara.x
-                                        - self.camara.chx,
-                                        element.y
-                                        + y * element.tile_size
-                                        - self.camara.y
-                                        - self.camara.chy,
-                                    ),
-                                )
-                            if tile[1] and element.parent:
-                                tile[1].x = (
-                                    element.x
-                                    + x * element.tile_size
-                                    - self.camara.x
-                                    - self.camara.chx
-                                    + element.parent.x
-                                )
-
-                                tile[1].y = (
-                                    element.y
-                                    + y * element.tile_size
-                                    - self.camara.y
-                                    - self.camara.chy
-                                    + element.parent.y
-                                )
-                            elif tile[1]:
-                                tile[1].x = (
-                                    element.x
-                                    + x * element.tile_size
-                                    - self.camara.x
-                                    - self.camara.chx
-                                    + element.parent.x
-                                )
-
-                                tile[1].y = (
-                                    element.y
-                                    + y * element.tile_size
-                                    - self.camara.y
-                                    - self.camara.chy
-                                    + element.parent.y
-                                )
-                            if self.devmode:
-                                if tile[0] != None and tile[1]:
-                                    pygame.draw.rect(
-                                        self.WIN,
-                                        (0, 0, 0),
-                                        tile[1],
-                                        4,
-                                    )
-                            if tile[2] != None:
-                                tile[2]((tile, x, y))
+                element.group.update(
+                    self.camara.x,
+                    self.camara.y,
+                    self.camara.chx,
+                    self.camara.chy,
+                    (element.parent.x if element.parent else 0),
+                    (element.parent.y if element.parent else 0),
+                )
+                element.group.draw(self.WIN)
             elif element.type == "rect":
                 pygame.draw.rect(self.WIN, element.color, element)
             elif element.type == "particle":
@@ -439,7 +328,7 @@ class Window:
 
         self.queue = []
 
-        pygame.display.update()
+        pygame.display.flip()
 
         self.endtime = time.time()
 

@@ -5,10 +5,7 @@ import random
 
 
 class TileMap:
-    def __init__(self, tile_list, tile_size, assets, scale, x, y, parent=None):
-        """tile_list: map.pkmap file with all tile position
-        assets: {"id":(pk.Image | None, "Colision"|Bool, "Function"|None)}"""
-
+    def __init__(self, tile_list, tile_size, assets, scale, x, y, parent=None) -> None:
         ## meta
         self.type = "tilemap"
         self.x = x
@@ -35,21 +32,42 @@ class TileMap:
         self.width = len(data[0]) * self.tile_size
         self.height = len(data) * self.tile_size
 
+        class Tile(pygame.sprite.Sprite):
+            def __init__(self, x, y, tile_img, tilesize) -> None:
+                super().__init__()
+                self.image = tile_img
+                self.rect = pygame.Rect(
+                    x * tilesize,
+                    y * tilesize,
+                    tilesize,
+                    tilesize,
+                )
+                self.x, self.y = x * tilesize, y * tilesize
+
+            def update(self, cx, cy, csx, csy, px, py):
+                self.rect.x = self.x - cx - csx + px
+                self.rect.y = self.y - cy - csy + py
+
         for y, row in enumerate(data):
-            _tmprow = []
             for x, tile in enumerate(row.split(",")):
                 if tile == "-1":
-                    _tmprow.append((None,))
                     continue
-                _thing = pygame.transform.scale(
-                    assets[tile].image,
-                    (
-                        scale * assets[tile].image.get_width() / 100,
-                        scale * assets[tile].image.get_height() / 100,
-                    ),
-                )
-                _tmprow.append((_thing, False, None))
-            self.tiles.append(_tmprow)
+                try:
+                    _tile = pygame.transform.scale(
+                        assets[tile].image,
+                        (
+                            scale * assets[tile].image.get_width() / 100,
+                            scale * assets[tile].image.get_height() / 100,
+                        ),
+                    )
+                except KeyError:
+                    raise Exception(
+                        "The tilemap and tileset do not accord to the same tile. MABY YOU HAVE LINKED THE WRONG TILESET OR TILEMAP"
+                    )
+                self.tiles.append(Tile(x, y, _tile, self.tile_size))
+
+        self.group = pygame.sprite.Group()
+        self.group.add(self.tiles)
 
 
 class Text:
