@@ -1,21 +1,23 @@
 import pygame
 import os
-import numpy as np
+
+try:
+    import numpy as np
+
+    has_numpy = 1
+except:
+    has_numpy = 0
 
 
 class Image:
     def __init__(self, path):
         if type(path) == str:
             self.image = pygame.image.load(path).convert_alpha()
+            if has_numpy:
+                if not np.any(pygame.surfarray.array_alpha(self.image) == 0):
+                    self.image = pygame.image.load(path).convert()
         else:
             self.image = path
-
-    def scale_image(self, scale):
-        self.scale = scale
-        self.w = scale * self.image.get_width() / 100
-        self.h = scale * self.image.get_height() / 100
-
-        self.image = pygame.transform.scale(self.image, (self.w, self.h))
 
 
 class Animation:
@@ -27,6 +29,11 @@ class Animation:
                 out = os.path.join(path, filename)
                 key = filename[:-4]
                 self.uanimations[key] = pygame.image.load(out).convert_alpha()
+                if has_numpy:
+                    if not np.any(
+                        pygame.surfarray.array_alpha(self.uanimations[key]) == 0
+                    ):
+                        self.uanimations[key] = pygame.image.load(out).convert()
 
         sorted_keys = sorted(self.uanimations.keys())
         for i in sorted_keys:
@@ -47,12 +54,12 @@ class TileSet:
         "Loads image from x,y,x+offset,y+offset"
         rect = pygame.Rect(rectangle)
         image = pygame.Surface(rect.size, pygame.SRCALPHA, 32).convert_alpha()
-        image.set_colorkey(None, pygame.RLEACCEL)
         image.blit(self.sheet, (0, 0), rect)
-        # if np.any(pygame.surfarray.pixels_alpha(image) != 0):
-        #     re = Image(image)
-        #     return re
-        # return None
+
+        if has_numpy:
+            if not np.any(pygame.surfarray.array_alpha(image) == 0):
+                image = pygame.Surface(rect.size, depth=32).convert()
+                image.blit(self.sheet, (0, 0), rect)
         return Image(image)
 
     def load(self, tile_dimensions=16):

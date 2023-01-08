@@ -23,7 +23,7 @@ class Window:
             self.chx = random.randint(-intensity, intensity) / 100
             self.chy = random.randint(-intensity, intensity) / 100
 
-    def __init__(self, title, width, height, icon=None):
+    def __init__(self, width, height, title=None, icon=None):
         """
         Creates a window
 
@@ -49,10 +49,11 @@ class Window:
         self.devmode = False
         self.icon = icon
         self.bg = (255, 255, 255)
-        self.WIN = pygame.display.set_mode(
-            (self.width, self.height), pygame.SCALED, display=0, vsync=0
-        )
-        pygame.display.set_caption(title)
+        self.WIN = pygame.display.set_mode((self.width, self.height))
+        if title != None:
+            pygame.display.set_caption(title)
+        else:
+            pygame.display.set_caption("Panik-Core Engine v.0.8.8")
         if self.icon:
             pygame.display.set_icon(
                 pygame.transform.scale(
@@ -89,6 +90,16 @@ class Window:
         self.winsize_cache = pygame.display.get_surface().get_size()
         return pygame.display.get_surface().get_size()
 
+    @property
+    def wwidth(self):
+        self.winsize_cache = pygame.display.get_surface().get_size()
+        return pygame.display.get_surface().get_size()[0]
+
+    @property
+    def wheight(self):
+        self.winsize_cache = pygame.display.get_surface().get_size()
+        return pygame.display.get_surface().get_size()[1]
+
     def blit(self, object=[]):
         self.queue.extend(object)
 
@@ -96,18 +107,9 @@ class Window:
         self.delta_time = self.clock.tick(fps) / 1000.0
         return self.delta_time
 
-    def setResizable(self):
-        self.WIN = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-
     def setFullscreen(self):
         self.WIN = pygame.display.set_mode((0, 0), FULLSCREEN | DOUBLEBUF, 16)
         self.winsize_cache = self.winsize
-
-    def setTitle(self, title):
-        pygame.display.set_caption(title)
-
-    def setIcon(self, icon):
-        pygame.display.set_icon(pygame.image.load(icon).convert_alpha())
 
     def render(self, ui=None):
         self.starttime = time.time()  ## for timing
@@ -130,37 +132,24 @@ class Window:
                     image = element.image
 
                 ## center image
-                if element.parent:
-                    draw_x = (
-                        element.x
-                        - image.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx
-                        + element.parent.x
-                    )
-                    draw_y = (
-                        element.y
-                        - image.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy
-                        + element.parent.y
-                    )
-                else:
-                    draw_x = (
-                        element.x
-                        - image.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx
-                    )
-                    draw_y = (
-                        element.y
-                        - image.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy
-                    )
+                draw_x = (
+                    element.x
+                    - image.get_width() / 2
+                    - (self.camara.x if not element.is_hud else 0)
+                    - (self.camara.chx if not element.is_hud else 0)
+                    + (element.parent.x if element.parent else 0)
+                )
+                draw_y = (
+                    element.y
+                    - image.get_height() / 2
+                    - (self.camara.y if not element.is_hud else 0)
+                    - (self.camara.chy if not element.is_hud else 0)
+                    + (element.parent.y if element.parent else 0)
+                )
 
                 ## blit image
-                self.WIN.blit(image, (draw_x, draw_y))
+                if not element.hide:
+                    self.WIN.blit(image, (draw_x, draw_y))
 
                 ## colision
                 if element.colision:
@@ -218,77 +207,10 @@ class Window:
                     (element.parent.x if element.parent else 0),
                     (element.parent.y if element.parent else 0),
                 )
-                element.group.draw(self.WIN)
+                if not element.hide:
+                    element.group.draw(self.WIN)
             elif element.type == "rect":
                 pygame.draw.rect(self.WIN, element.color, element)
-            elif element.type == "particle":
-
-                ## transform image
-
-                if element.rotation != 0:
-                    image = pygame.transform.rotate(element.image, element.rotation)
-                    if element.rotation > 360 or element.rotation < -360:
-                        element.rotation = 0
-                else:
-                    image = element.image
-
-                ## center image
-                if element.parent:
-                    draw_x = (
-                        element.x
-                        - image.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx
-                        + element.parent.x
-                    )
-                    draw_y = (
-                        element.y
-                        - image.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy
-                        + element.parent.y
-                    )
-                else:
-                    draw_x = (
-                        element.x
-                        - image.get_width() / 2
-                        - self.camara.x
-                        - self.camara.chx
-                    )
-                    draw_y = (
-                        element.y
-                        - image.get_height() / 2
-                        - self.camara.y
-                        - self.camara.chy
-                    )
-
-                ## blit image
-                self.WIN.blit(image, (draw_x, draw_y))
-
-                ## colision
-                if element.colision:
-                    ## center colision
-                    element.colision.x = (
-                        element.x
-                        + element.cx
-                        - element.cw / 2
-                        - self.camara.x
-                        - self.camara.chx
-                    )
-                    element.colision.y = (
-                        element.y
-                        + element.cy
-                        - element.ch / 2
-                        - self.camara.y
-                        - self.camara.chy
-                    )
-
-                    if self.devmode:
-                        text = self.font.render("ID: " + element.id, True, (0, 0, 0))
-                        pygame.draw.rect(self.WIN, (0, 0, 0), element.colision, 4)
-                        self.WIN.blit(
-                            text, (element.colision.x, element.colision.y - 25)
-                        )
 
         self.camara.chx = 0
         self.camara.chy = 0
