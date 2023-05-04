@@ -14,6 +14,10 @@ class Window:
             self.chx = 0
             self.chy = 0
 
+            self.target = None
+
+            self.lock_strength = 20
+
         def camara_shake(self, intensity):
             self.chx = random.randint(-intensity, intensity)
             self.chy = random.randint(-intensity, intensity)
@@ -22,6 +26,9 @@ class Window:
             """Give a int and camera shake will be 100 times smaller"""
             self.chx = random.randint(-intensity, intensity) / 100
             self.chy = random.randint(-intensity, intensity) / 100
+        
+        def lock_target(self, target):
+            self.target = target
 
     def __init__(self, width, height, title=None, icon=None):
         """
@@ -108,13 +115,23 @@ class Window:
         return self.delta_time
 
     def setFullscreen(self):
-        self.WIN = pygame.display.set_mode((0, 0), FULLSCREEN | DOUBLEBUF, 16)
+        self.WIN = pygame.display.set_mode((0, 0), FULLSCREEN | DOUBLEBUF | HWACCEL, 16)
         self.winsize_cache = self.winsize
 
-    def render(self, ui=None):
+    def setResizable(self):
+        self.WIN = pygame.display.set_mode(self.winsize_cache, RESIZABLE, 16)
+        self.winsize_cache = self.winsize
+
+    def render(self, nofill=False, ui=None):
         self.starttime = time.time()  ## for timing
 
-        self.WIN.fill(self.bg)  # clear the window
+        if not nofill:
+            self.WIN.fill(self.bg)  # clear the window
+
+        ## do camara lock
+        if self.camara.target:
+            self.camara.x += (self.camara.target.x-self.camara.x-self.winsize_cache[0]/2) / self.camara.lock_strength
+            self.camara.y += (self.camara.target.y-self.camara.y-self.winsize_cache[1]/2) / self.camara.lock_strength
 
         ## main loop
         for element in self.queue:
@@ -124,10 +141,13 @@ class Window:
 
                 ## transform image
 
+                ## rotate
                 if element.rotation != 0:
-                    image = pygame.transform.rotate(element.image, element.rotation)
-                    if element.rotation > 360 or element.rotation < -360:
+                    if element.rotation > 360:
                         element.rotation = 0
+                    elif element.rotation < 0:
+                        element.rotation = 360
+                    image = pygame.transform.rotate(element.image, element.rotation)
                 else:
                     image = element.image
 
@@ -172,43 +192,143 @@ class Window:
                     if self.devmode:
                         text = self.font.render("ID: " + element.id, True, (0, 0, 0))
                         pygame.draw.rect(self.WIN, (0, 0, 0), element.colision, 4)
-                        self.WIN.blit(
-                            text, (element.colision.x, element.colision.y - 25)
-                        )
-            elif element.type == "text":
-                if element.parent:
-                    self.WIN.blit(
-                        element.text,
-                        (
-                            element.x
-                            - self.camara.x
-                            - self.camara.chx
-                            + element.parent.x,
-                            element.y
-                            - self.camara.y
-                            - self.camara.chy
-                            + element.parent.y,
-                        ),
-                    )
-                else:
-                    self.WIN.blit(
-                        element.text,
-                        (
-                            element.x - self.camara.x - self.camara.chx,
-                            element.y - self.camara.y - self.camara.chy,
-                        ),
-                    )
-            elif element.type == "tilemap":
-                element.group.update(
-                    self.camara.x,
-                    self.camara.y,
-                    self.camara.chx,
-                    self.camara.chy,
-                    (element.parent.x if element.parent else 0),
-                    (element.parent.y if element.parent else 0),
+                        self.WIN.blit(text, (element.colision.x, element.colision.y - 25))
+            elif element.type == "elementstack":
+                if element.rotation > 360:
+                    element.rotation = 0
+                elif element.rotation < 0:
+                    element.rotation = 360
+                angle = element.rotation // element.va
+                angle = int(angle % element.angles)
+
+                image = element.cache[angle]
+
+                draw_x = (
+                    element.x
+                    - image.get_width() / 2
+                    - (self.camara.x if not element.is_hud else 0)
+                    - (self.camara.chx if not element.is_hud else 0)
+                    + (element.parent.x if element.parent else 0)
                 )
-                if not element.hide:
-                    element.group.draw(self.WIN)
+                draw_y = (
+                    element.y
+                    - image.get_height() * 1.4 / 2
+                    - (self.camara.y if not element.is_hud else 0)
+                    - (self.camara.chy if not element.is_hud else 0)
+                    + (element.parent.y if element.parent else 0)
+                )
+
+                self.WIN.blit(element.cache[angle], (draw_x, draw_y))
+
+                ## colision
+                if element.colision:
+                    ## center colision
+                    element.colision.x = (
+                        element.x
+                        + element.cx
+                        - element.cw / 2
+                        - self.camara.x
+                        - self.camara.chx
+                    )
+                    element.colision.y = (
+                        element.y
+                        + element.cy
+                        - element.ch / 2
+                        - self.camara.y
+                        - self.camara.chy
+                    )
+
+                    if self.devmode:
+                        text = self.font.render("ID: " + element.id, True, (0, 0, 0))
+                        pygame.draw.rect(self.WIN, (0, 0, 0), element.colision, 4)
+                        self.WIN.blit(text, (element.colision.x, element.colision.y - 25))
+
+                if self.devmode:
+                    pygame.draw.rect(
+                        self.WIN,
+                        (255, 0, 0),
+                        (draw_x, draw_y, image.get_width(), image.get_height()),
+                        4,
+                    )
+                    pygame.draw.circle(
+                        self.WIN,
+                        (255, 0, 0),
+                        (
+                            draw_x + image.get_width() / 2,
+                            draw_y + image.get_height() * 1.4 / 2,
+                        ),
+                        10,
+                        5,
+                    )
+            elif element.type == "text":
+                self.WIN.blit(
+                    element.text,
+                    (
+                        element.x
+                        - (self.camara.x if not element.is_hud else 0)
+                        - (self.camara.chx if not element.is_hud else 0)
+                        + (element.parent.x if element.parent else 0),
+                        element.y
+                        - (self.camara.y if not element.is_hud else 0)
+                        - (self.camara.chy if not element.is_hud else 0)
+                        + (element.parent.y if element.parent else 0),
+                    ),
+                )
+            elif element.type == "tilemap":
+                for y, row in enumerate(element.tiles):
+                    if (  # if tile is off window, skip following collum rows
+                        (y + 1) * element.tile_size
+                        + element.y
+                        - self.camara.y
+                        - self.camara.chy
+                        + (element.parent.y if element.parent else 0)
+                        < 0
+                    ):
+                        continue
+                    elif (
+                        y * element.tile_size
+                        + element.y
+                        - self.camara.y
+                        - self.camara.chy
+                        + (element.parent.y if element.parent else 0)
+                        > self.winsize_cache[1]
+                    ):
+                        break
+                    for x, tile in enumerate(row):
+                        if tile != None:
+                            if (  # if tile is off window, skip following collums
+                                (x + 1) * element.tile_size
+                                + element.x
+                                - self.camara.x
+                                - self.camara.chx
+                                + (element.parent.x if element.parent else 0)
+                                < 0
+                            ):
+                                continue
+                            elif (
+                                x * element.tile_size
+                                + element.x
+                                - self.camara.x
+                                - self.camara.chx
+                                + (element.parent.x if element.parent else 0)
+                                > self.winsize_cache[0]
+                            ):
+                                break
+                            self.WIN.blit(
+                                tile,
+                                (
+                                    element.x
+                                    + x * element.tile_size
+                                    - self.camara.x
+                                    - self.camara.chx
+                                    + (element.parent.x if element.parent else 0),
+                                    element.y
+                                    + y * element.tile_size
+                                    - self.camara.y
+                                    - self.camara.chy
+                                    + (element.parent.y if element.parent else 0),
+                                ),
+                            )
             elif element.type == "rect":
                 pygame.draw.rect(self.WIN, element.color, element)
 
@@ -234,17 +354,26 @@ class Window:
             )
             self.WIN.blit(text, self.fps_pos)
         elif self.showtiming:
-            text = self.font.render(
-                "FPS: "
-                + str(round(self.clock.get_fps()))
-                + " | MS: "
-                + str(round(self.clock.get_time()))
-                + " | DT: "
-                + str(round(self.clock.get_rawtime())),
-                True,
-                self.fps_color,
+            self.WIN.blit(
+                self.font.render(
+                    "FPS: " + str(round(self.clock.get_fps())), True, self.fps_color
+                ),
+                (self.fps_pos[0], self.fps_pos[1]),
             )
-            self.WIN.blit(text, self.fps_pos)
+
+            self.WIN.blit(
+                self.font.render(
+                    "MS: " + str(round(self.clock.get_time())), True, self.fps_color
+                ),
+                (self.fps_pos[0], self.fps_pos[1] + 15),
+            )
+
+            self.WIN.blit(
+                self.font.render(
+                    "DT: " + str(round(self.clock.get_rawtime())), True, self.fps_color
+                ),
+                (self.fps_pos[0], self.fps_pos[1] + 30),
+            )
 
         ## update and return timing
 

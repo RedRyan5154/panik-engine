@@ -3,6 +3,10 @@ import time as tm
 import random
 
 
+def random_int(min, max):
+    return random.randint(min, max)
+
+
 class Vec2(pygame.math.Vector2):
     def __init__(self):
         super().__init__()

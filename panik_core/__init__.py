@@ -10,8 +10,8 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 print(
     """
--- Welcome to Panik-Core Engine v.0.8.8 --
-        - The Colisions Update -
+-- Welcome to Panik-Core Engine v.0.9.0 --
+        - The Production Update -
         
         """
 )
