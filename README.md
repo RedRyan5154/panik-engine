@@ -17,7 +17,7 @@ import panik_core as pk
 
 class Game:
     def __init__(self):
-        self.win = pk.Window("My Window", 1080, 720)
+        self.win = pk.Window(1080, 720, "My Window")
         self.win.showfps = True
 
     def run(self):
@@ -34,7 +34,7 @@ class Game:
                 ):
                     run = 0
 
-            window.render()
+            self.win.render()
 
 
 if __name__ == "__main__":
