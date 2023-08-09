@@ -2,17 +2,17 @@
   <img src="https://github.com/RedRyan5154/panik-core/blob/master/panik_core/asstes/logo.png?raw=true" alt="Panik-Core's logo"/>
 </p>
 
-# Welcome to the Panik-Core engine
+# Welcome to the Panik-Engine
 
-THE python graphical library
+THE python game engine
 
-The panik-core engine was built around pygame removing small mistakes that often unexperienced pygame developers do that feed on performance.  With panik-core, you will finish your first project in no time with the help of pre-made game object classes such as Entitys with collision, Parents and its sophisticated gui widgets using pygame_gui.
+The panik-engine was built around pygame fixing small mistakes that often unexperienced pygame developers do that feed on performance.  With panik-engine, you will finish your first project in no time with the help of pre-made game object classes such as Sprites with collision.
 
 ---
 
 # A minimal window
 ```python
-import panik_core as pk
+import panik_engine as pk
 
 
 class Game:
@@ -24,7 +24,7 @@ class Game:
         run = 1
 
         while run:
-            self.win.tick(0)
+            dt = self.win.tick(0)
 
             for event in pk.Events.get():
                 if (
