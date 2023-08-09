@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/RedRyan5154/panik-core/blob/master/panik_core/asstes/logo.png?raw=true" alt="Panik-Core's logo"/>
+  <img src="https://github.com/RedRyan5154/panik-core/blob/master/panik_engine/asstes/logo.png?raw=true" alt="Panik-Core's logo"/>
 </p>
 
 # Welcome to the Panik-Engine
