@@ -10,8 +10,8 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 print(
     """
--- Welcome to Panik-Core Engine v.0.9.0 --
-        - The Production Update -
+-- Welcome to Panik-Core Engine v.0.9.9 --
+          - The Testing Update -
         
         """
 )
@@ -31,14 +31,14 @@ pygame.font.init()
 pygame.init()
 
 
-from panik_core.window import *
-from panik_core.game_object import *
-from panik_core.assets import *
+from panik_engine.window import *
+from panik_engine.game_object import *
+from panik_engine.assets import *
 
 if has_gui:
-    from panik_core.ui import *
-import panik_core.mouse as Mouse
-from panik_core.utils import *
+    from panik_engine.ui import *
+import panik_engine.mouse as Mouse
+import panik_engine.utils as Utils
 
 # ^^^^^^^^^^^ Import submodules
 
