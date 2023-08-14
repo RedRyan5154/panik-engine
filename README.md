@@ -6,7 +6,7 @@
 
 THE python game engine
 
-The panik-engine was built around pygame fixing small mistakes that often unexperienced pygame developers do that feed on performance.  With panik-engine, you will finish your first project in no time with the help of pre-made game object classes such as Sprites with collision.
+The panik-engine was built around the excelent pygame-ce library. It provides a simple yer powerful set of tools to make game development fast and simple.
 
 ---
 
